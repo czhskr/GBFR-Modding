@@ -22,6 +22,7 @@ I develop these mods with assistance from Codex, using reverse engineering, runt
 
 The development process and Codex's contributions may vary between mods. I document relevant details in each mod's README.
 
+---
 
 이 저장소에는 제가 개발한 그랑블루 판타지: 리링크 - 엔드리스 라그나로크 모드들이 포함되어 있으며, 배포한 모드와 현재 개발 중인 프로젝트를 함께 관리합니다.
 
