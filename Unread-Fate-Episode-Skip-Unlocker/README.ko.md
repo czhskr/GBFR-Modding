@@ -1,0 +1,38 @@
+# Fate Episode Skip Unlocker
+
+미감상 페이트 에피소드의 대사에서도 기존 스킵 버튼을 사용할 수 있게 해주는 모드입니다.
+
+[English](README.md)
+
+## 기능
+
+- 미감상 페이트 에피소드의 대사에서 스킵 입력을 활성화합니다.
+- 게임의 기존 스킵 확인창과 완료 처리 과정을 사용합니다.
+- 세이브 파일을 직접 수정하거나 보상을 강제로 지급하지 않습니다.
+
+## 제한사항
+
+- 전투 전 대사는 스킵할 수 있지만, 전투와 전투 후 대사는 스킵할 수 없습니다.
+- 모든 페이트 에피소드를 개별적으로 테스트하지는 않았습니다.
+- 지원하지 않는 게임 버전에서는 동작하지 않을 수 있습니다.
+
+## 필수 구성 요소
+
+- Granblue Fantasy: Relink
+- [Reloaded-II](https://github.com/Reloaded-Project/Reloaded-II)
+- [Endless Ragnarok Mod Loader](https://www.nexusmods.com/granbluefantasyrelink/mods/526)
+
+## 다운로드
+
+[Nexus Mods에서 다운로드](https://www.nexusmods.com/granbluefantasyrelink/mods/890) ·
+[GitHub Releases](https://github.com/czhskr/GBFR-Modding/releases)
+
+## 개발 및 AI 사용 안내
+
+이 모드는 Codex의 도움을 받아 개발했습니다. 제가 목표와 요구사항을 정하고,
+기존 분석 자료와 개발 환경을 제공하며, 개발 과정을 이끌고 게임 내 테스트를
+수행했습니다.
+
+Codex는 REA 도구를 이용해 리버스 엔지니어링과 실행 중 분석을 수행하고,
+스킵 기능과 관련된 조건을 찾아 모드 코드 대부분을 작성했습니다. 개발 과정에서
+테스트 관찰 내용과 결과도 함께 검토했습니다.
