@@ -10,7 +10,7 @@
 
 미감상 페이트 에피소드에서도 게임의 기존 스킵 입력을 사용할 수 있게 합니다.
 
-[자세히 보기](Fate-Episode-Skip-Unlocker/README.md) ·
+[자세히 보기](Unread-Fate-Episode-Skip-Unlocker/README.ko.md) ·
 [Nexus Mods](https://www.nexusmods.com/granbluefantasyrelink/mods/890) ·
 [GitHub Releases](https://github.com/czhskr/GBFR-Modding/releases)
 
