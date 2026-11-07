@@ -1,22 +1,32 @@
-# Fate Episode Skip Unlocker
+# Unread Fate Episode Skip Unlocker
 
 Skip unread Fate Episode dialogue using the game's usual Skip button.
 
 [한국어](README.ko.md)
 
-## Features
-
-- Enables Skip during unread Fate Episode dialogue.
-- Uses the game's existing Skip confirmation and completion flow.
-- Does not directly edit save files or force rewards.
-
 **Last tested:** November 7, 2026 — game version 2.0.6.
 
-## Limitations
+## Safety & Compatibility
 
-- Pre-battle dialogue can be skipped, but battles and post-battle dialogue cannot.
-- Not every Fate Episode has been individually tested.
-- Unsupported game versions may not work.
+- Changes only the conditions needed to enable Skip for unread Fate Episode dialogue.
+- Uses the game's existing Skip and completion flow without directly editing save files or forcing rewards.
+- Checks the game executable and target function before applying the hook. If validation fails, the hook is not installed.
+- Leaves the original result unchanged when the conditions for applying the mod are not met.
+
+## Testing & Limitations
+
+Developed and tested on game version 2.0.6. Most Fate Episodes have been tested across a variety of scenarios, including:
+
+- Unread and previously completed episodes, across multiple characters
+- Skipping during dialogue and in episodes that include battles
+- Completion rewards and saved progress after restarting the game
+- Normal game behavior after disabling the mod
+
+Pre-battle dialogue can be skipped, but battles and post-battle dialogue cannot currently be skipped.
+
+## Planned Updates
+
+Work on skipping post-battle dialogue will resume after my current mod project is complete.
 
 ## Requirements
 
