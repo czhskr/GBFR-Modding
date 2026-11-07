@@ -10,6 +10,8 @@ Skip unread Fate Episode dialogue using the game's usual Skip button.
 - Uses the game's existing Skip confirmation and completion flow.
 - Does not directly edit save files or force rewards.
 
+**Last tested:** November 7, 2026 — game version 2.0.6.
+
 ## Limitations
 
 - Pre-battle dialogue can be skipped, but battles and post-battle dialogue cannot.
