@@ -10,7 +10,7 @@ Mods for Granblue Fantasy: Relink, including released and in-development project
 
 Enables the game's usual Skip input for unread Fate Episodes.
 
-[Details](Fate-Episode-Skip-Unlocker/README.md) ·
+[Details](Unread-Fate-Episode-Skip-Unlocker/README.md) ·
 [Nexus Mods](https://www.nexusmods.com/granbluefantasyrelink/mods/890) ·
 [GitHub Releases](https://github.com/czhskr/GBFR-Modding/releases)
 
