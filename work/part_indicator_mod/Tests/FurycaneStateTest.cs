@@ -103,6 +103,42 @@ static unsafe class FurycaneStateTest
                 *(int*)(actor + 0x25bc + i * 4) = i; *(int*)(actor + 0x25bc + 4 * 4) = 4;
                 *(byte*)enabled = 0;
             }
+            *(int*)(player + 0x118) = 5;
+            nint headRecord = actor + 0x25e8 + 8 * 20, headEnabled = entries + 8 * 48 + 0x29;
+            Reject("disabled Furycane head accepted");
+            *(byte*)headEnabled = 1;
+            var headFull = PartStatePolicy.Evaluate(Read("enabled Furycane head unavailable"));
+            if (!headFull.Visible || headFull.Broken || PercentageText.Percentage(headFull) != 100)
+                throw new Exception("fresh Furycane head percentage");
+            *(int*)headRecord = 250;
+            if (PercentageText.Percentage(PartStatePolicy.Evaluate(Read("damaged Furycane head unavailable"))) != 50)
+                throw new Exception("Furycane head read another armor record");
+            *(byte*)headEnabled = 0; Reject("disabled damaged head retained"); *(byte*)headEnabled = 1;
+            *(int*)headRecord = 0;
+            var headZero = PartStatePolicy.Evaluate(Read("zero Furycane head unavailable"));
+            if (headZero.Broken || PercentageText.Percentage(headZero) != 0)
+                throw new Exception("head zero alone implied destruction");
+            *(byte*)(headRecord + 8) = 1;
+            var headBroken = PartStatePolicy.Evaluate(Read("broken Furycane head unavailable"));
+            if (!headBroken.Visible || !headBroken.Broken || PercentageText.Percentage(headBroken) != null)
+                throw new Exception("Furycane head processed break not shown");
+            *(byte*)headEnabled = 0; Reject("disabled broken head retained");
+            *(int*)headRecord = 750; *(int*)(headRecord + 4) = 750; *(byte*)(headRecord + 8) = 0;
+            Reject("regenerated but unavailable head shown"); *(byte*)headEnabled = 1;
+            if (PercentageText.Percentage(PartStatePolicy.Evaluate(Read("regenerated Furycane head unavailable"))) != 100)
+                throw new Exception("Furycane head reset kept stale state");
+            *(int*)headRecord = 375;
+            if (PercentageText.Percentage(PartStatePolicy.Evaluate(Read("changed head initial unavailable"))) != 50)
+                throw new Exception("Furycane head denominator was hardcoded");
+            *(byte*)headEnabled = 2; Reject("invalid head eligibility accepted"); *(byte*)headEnabled = 1;
+            *(int*)(actor + 0x25bc + 8 * 4) = 4; *(int*)(actor + 0x25bc + 4 * 4) = 8;
+            Reject("head selection interpreted as a leg record");
+            *(int*)(actor + 0x25bc + 8 * 4) = 8; *(int*)(actor + 0x25bc + 4 * 4) = 4;
+            *(int*)(entries + 10 * 48) = 5; Reject("ambiguous Furycane head accepted"); *(int*)(entries + 10 * 48) = 400;
+            *(int*)(actor + 0x25bc + 2 * 4) = 8; Reject("arm aliases the selected head"); *(int*)(actor + 0x25bc + 2 * 4) = 2;
+            *(byte*)(headRecord + 8) = 2; Reject("invalid head break flag accepted"); *(byte*)(headRecord + 8) = 0;
+            *(int*)headRecord = 751; Reject("head current above initial accepted");
+            *(int*)headRecord = 500; *(int*)(headRecord + 4) = 500; *(byte*)headEnabled = 0;
             *(int*)(player + 0x118) = 130;
             foreach (var (current, expected) in new[] { (116, 29), (228, 57), (1, 1), (399, 99), (0, 0), (400, 100) })
             {
@@ -123,7 +159,7 @@ static unsafe class FurycaneStateTest
             *(int*)(actor + 0x25bc) = -1; Read("unconnected non-leg must not hide a verified leg"); *(int*)(actor + 0x25bc) = 0;
             *(int*)(actor + 0x25bc + 5 * 4) = 11; Reject("out-of-range Furycane mapping accepted"); *(int*)(actor + 0x25bc + 5 * 4) = 5;
             *(nint*)(actor + 0x790) = entries + 513 * 48; Reject("oversized Furycane vector accepted"); *(nint*)(actor + 0x790) = entries + 11 * 48;
-            foreach (int id in new[] { 0, 7, 5, 300 }) { *(int*)(player + 0x118) = id; Reject("unverified Furycane body/phase selected"); }
+            foreach (int id in new[] { 0, 7, 300 }) { *(int*)(player + 0x118) = id; Reject("unverified Furycane body/phase selected"); }
             *(int*)(player + 0x118) = 130;
             foreach (int unknown in new[] { vtableRva + 8, 0x6175aa8, 0x6177788 })
             { *(nint*)actor = module + unknown; Reject("unverified Furycane variant accepted"); }

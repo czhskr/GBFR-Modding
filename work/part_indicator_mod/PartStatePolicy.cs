@@ -30,7 +30,7 @@ public static class PartStatePolicy
         int pyetIndex = PyetPartIndex(s.ClassId, s.SelectedId);
         if (crocodileIndex >= 0 && s.Current == Math.Truncate(s.Current)) broken = s.DestroyedIndices.Contains(crocodileIndex);
         else if (s.ClassId is 0x1700 or >= 0x1800 and <= 0x1806 && s.SelectedId == 5) broken = s.DestroyedIndices.Contains(0);
-        else if (((s.ClassId is 0x7200 or 0x7210 && s.SelectedId is 48 or 80 or 114 or 130 or 146 or 162) ||
+        else if (((s.ClassId is 0x7200 or 0x7210 && s.SelectedId is 5 or 48 or 80 or 114 or 130 or 146 or 162) ||
                   FurycaneArmorIndex(s.ClassId, s.SelectedId) >= 0) &&
                  s.Current == Math.Truncate(s.Current) && s.CurrentBroken is bool currentBroken) broken = currentBroken;
         else if ((s.ClassId == 0x7100 && s.SelectedId is 9 or 13 || s.ClassId == 0x7101 && s.SelectedId is 3840 or 282) && s.CurrentBroken is bool armBroken) broken = armBroken;

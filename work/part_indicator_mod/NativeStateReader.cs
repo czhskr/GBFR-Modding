@@ -420,9 +420,9 @@ public sealed class NativeStateReader(nint moduleBase)
     {
         snapshot = null;
         bool humanoid = type is 0x7201 or 0x7211;
-        bool temporaryArm = !humanoid && selected is 48 or 80;
+        bool temporaryArmor = !humanoid && selected is 5 or 48 or 80;
         // Each form uses its own native layout and lock relationship; cosmetic/core rows stay hidden.
-        if (humanoid ? PartStatePolicy.FurycaneArmorIndex(type, selected) < 0 : selected is not (48 or 80 or 114 or 130 or 146 or 162)) return false;
+        if (humanoid ? PartStatePolicy.FurycaneArmorIndex(type, selected) < 0 : selected is not (5 or 48 or 80 or 114 or 130 or 146 or 162)) return false;
         uint id = R<uint>(scene + 0x38); ulong stamp = R<ulong>(scene + 0x48);
         if (id is 0 or > 1048576 || stamp == 0) return Reject();
         nint manager = R<nint>(moduleBase + 0x7020988), scenes = R<nint>(manager + 0x20), stamps = R<nint>(manager + 0x48), slot = (nint)((id - 1) * 8);
@@ -438,8 +438,8 @@ public sealed class NativeStateReader(nint moduleBase)
             chosen = i;
         }
         if (chosen == -1) return false;
-        // Down transitions can leave a selected arm behind after its native lock is disabled.
-        if (temporaryArm && R<byte>(begin + chosen * 48 + 0x29) != 1) return false;
+        // Down transitions can leave selected armor behind after its native lock is disabled.
+        if (temporaryArmor && R<byte>(begin + chosen * 48 + 0x29) != 1) return false;
         int index = humanoid ? PartStatePolicy.FurycaneArmorIndex(type, selected) : -1;
         if (humanoid && chosen != index) return Reject();
         for (int i = 0; i < maps.Length; i++)
@@ -450,12 +450,12 @@ public sealed class NativeStateReader(nint moduleBase)
             if (index != -1) return Reject();
             index = i;
         }
-        if (humanoid ? index is < 1 or > 5 : temporaryArm ? index is < 2 or > 3 : index is < 4 or > 7) return false;
+        if (humanoid ? index is < 1 or > 5 : selected == 5 ? index != 8 : temporaryArmor ? index is < 2 or > 3 : index is < 4 or > 7) return false;
         nint record = actor + (humanoid ? 0x2604 : 0x25e8) + index * (humanoid ? 12 : 20);
         int current = R<int>(record), initial = R<int>(record + 4); byte broken = R<byte>(record + 8);
         if (current < 0 || initial is < 1 or > 1000000000 || current > initial || broken > 1) return Reject();
         if (R<int>(record) != current || R<int>(record + 4) != initial || R<byte>(record + 8) != broken ||
-            temporaryArm && R<byte>(begin + chosen * 48 + 0x29) != 1 ||
+            temporaryArmor && R<byte>(begin + chosen * 48 + 0x29) != 1 ||
             R<nint>(actor + 0x788) != begin || R<nint>(actor + 0x790) != end ||
             ids.Where((value, i) => R<int>(begin + i * 48) != value).Any() ||
             maps.Where((value, i) => R<int>(actor + 0x25bc + i * 4) != value).Any() ||
