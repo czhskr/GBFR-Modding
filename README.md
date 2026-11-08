@@ -19,10 +19,13 @@ Enables the game's usual Skip input for unread Fate Episodes.
 ### Part Break Indicator
 
 Displays status and verified remaining durability for supported lock-on parts.
-Development checkpoints are available; this is not a public release.
+This project is in development and is not a public release.
 
-[Source and build notes](work/part_indicator_mod/README.md) ·
-[Checkpoints](docs/checkpoints/)
+[Source](Part-Break-Indicator/)
+
+The source archive excludes development assets and test data. Reloaded-II
+dependencies and additional local files are required to build and run all tests;
+the repository alone cannot reproduce the complete mod package.
 
 ## Development
 
