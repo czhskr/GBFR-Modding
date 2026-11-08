@@ -13,7 +13,7 @@ static unsafe class DragonStateTest
         if (module == 0) throw new Exception("Dragon fixture reservation");
         try
         {
-            foreach (int page in new[] { 0x7362000, 0x7035000, 0x7020000, 0x7c53000 })
+            foreach (int page in new[] { 0x7362000, 0x7035000, 0x7020000, 0x7c53000, 0x7c23000 })
                 if (VirtualAlloc(module + page, 0x1000, 0x1000, 4) == 0) throw new Exception("Dragon fixture commit");
             nint vector = Alloc(8), player = Alloc(0x240), a = Alloc(8), b = Alloc(0x30), c = Alloc(0x20),
                 localScene = Alloc(0x80), localActor = Alloc(8), target = Alloc(0x80), actor = Alloc(0x3000),
@@ -45,8 +45,9 @@ static unsafe class DragonStateTest
                 return value;
             }
             void Body() { *(int*)(player + 0x118) = 7; if (reader.TryReadSnapshot(world, 1, out _)) throw new Exception("Dragon body displayed"); }
-            foreach (var (vt, type) in new (int, uint)[] { (0x61791e8,0x1800), (0x617b868,0x1801), (0x617aec8,0x1802),
-                         (0x617c208,0x1803), (0x6179b88,0x1804), (0x617cba8,0x1805), (0x617a528,0x1806) })
+            (int Vtable, uint Type)[] profiles = [(0x61791e8,0x1800), (0x617b868,0x1801), (0x617aec8,0x1802),
+                         (0x617c208,0x1803), (0x6179b88,0x1804), (0x617cba8,0x1805), (0x617a528,0x1806)];
+            foreach (var (vt, type) in profiles)
             {
                 *(nint*)actor = module + vt; *(float*)(actor + 0x27a4) = 1500;
                 *(nint*)(actor + 0xcd8) = 0; *(nint*)(actor + 0xce0) = 0; reader = new NativeStateReader(module);
@@ -105,6 +106,47 @@ static unsafe class DragonStateTest
                 if (Read().Initial != null) throw new Exception("invalid Dragon maximum used");
                 *(float*)(parameter + 0xf50) = 1500;
             }
+            nint mode = Alloc(0x3000); *(nint*)(module + 0x7c23338) = mode;
+            foreach (var (vt, type) in profiles)
+            {
+                float maximum = type is 0x1805 or 0x1806 ? 6000 : 3000;
+                *(nint*)actor = module + vt; *(byte*)(actor + 0xe) = 0x40;
+                *(float*)(parameter + 0xf54) = maximum; *(float*)(actor + 0x27a4) = maximum;
+                *(nint*)(actor + 0xcd8) = 0; *(nint*)(actor + 0xce0) = 0; reader = new NativeStateReader(module);
+                if (Read().Initial != maximum) throw new Exception("source-matched alternate Dragon maximum omitted");
+                *(float*)(actor + 0x27a4) = maximum - 199.97998f;
+                if (PercentageText.Percentage(PartStatePolicy.Evaluate(Read())) != (maximum == 3000 ? 93 : 96)) throw new Exception("alternate Dragon float denominator");
+                Body(); if (Read().Initial != maximum) throw new Exception("alternate Dragon body return lost maximum");
+                *(nint*)(secondTarget + 0x70) = secondActor; *(nint*)secondActor = module + vt;
+                *(nint*)(secondActor + 0x1598) = otherParameter; *(byte*)(secondActor + 0xe) = 0;
+                *(float*)(otherParameter + 0xf50) = 1500; *(float*)(secondActor + 0x27a4) = 1500;
+                *(nint*)(secondActor + 0xcd8) = 0; *(nint*)(secondActor + 0xce0) = 0;
+                *(nint*)(player + 0x108) = secondTarget;
+                if (Read().Initial != 1500) throw new Exception("normal Dragon inherited alternate denominator");
+                *(nint*)(player + 0x108) = target;
+                if (Read().Initial != maximum) throw new Exception("mixed normal/alternate Dragon return lost independent maximum");
+                *(nint*)(module + 0x7c23338) = 1;
+                if (Read().Initial != null) throw new Exception("unreadable mode retained alternate Dragon proof");
+                *(nint*)(module + 0x7c23338) = mode;
+                if (Read().Initial != null) throw new Exception("damaged alternate Dragon invented proof after mode loss");
+                *(int*)(mode + 0x2de0) = 1; *(int*)(mode + 4) = 2; *(float*)(actor + 0x27a4) = 1500;
+                if (Read().Initial != 1500) throw new Exception("native override did not select normal Dragon source");
+                *(int*)(mode + 4) = 3;
+                if (Read().Initial != null) throw new Exception("alternate mode reused normal Dragon denominator");
+                *(int*)(mode + 0x2de0) = 0; *(int*)(mode + 4) = 0; *(float*)(actor + 0x27a4) = maximum;
+                Read(); *(float*)(parameter + 0xf54) = maximum + 500;
+                if (Read().Initial != null) throw new Exception("changed alternate Dragon source retained proof");
+                *(float*)(parameter + 0xf54) = maximum; Read(); *(float*)(parameter + 0xf54) = float.NaN;
+                if (Read().Initial != null) throw new Exception("invalid alternate Dragon source accepted");
+                *(float*)(parameter + 0xf54) = maximum; *(float*)(actor + 0x27a4) = maximum; Read();
+                *(float*)(actor + 0x27a4) = 0; *(int*)history = 0;
+                *(nint*)(actor + 0xcd8) = history; *(nint*)(actor + 0xce0) = history + 4;
+                var destroyed = PartStatePolicy.Evaluate(Read());
+                if (!destroyed.Broken || destroyed.Fraction != null) throw new Exception("alternate Dragon processed break/number hiding");
+                *(nint*)(actor + 0xcd8) = 0; *(nint*)(actor + 0xce0) = 0; *(float*)(actor + 0x27a4) = maximum / 2;
+                if (Read().Initial != null) throw new Exception("alternate Dragon proof survived history reset");
+            }
+            *(byte*)(actor + 0xe) = 0; *(nint*)(module + 0x7c23338) = 0;
             *(float*)(parameter + 0xf50) = 1.2f; *(float*)(actor + 0x27a4) = 1.2f;
             reader = new NativeStateReader(module); Body(); *(float*)(actor + 0x27a4) = .6f;
             if (PercentageText.Percentage(PartStatePolicy.Evaluate(Read())) != 50) throw new Exception("Dragon initial/current float was truncated or independently rounded");

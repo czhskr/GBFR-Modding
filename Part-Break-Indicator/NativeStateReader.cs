@@ -146,11 +146,14 @@ public sealed class NativeStateReader(nint moduleBase)
         float current = R<float>(actor + currentOffset);
         if (!float.IsFinite(current) || current is < 0 or > 1e9f) return Reject();
         nint parameter = R<nint>(actor + 0x1598); byte flags = R<byte>(actor + 0xe);
+        (nint Context, int Mode, int Submode, bool Alternate) mode = default;
+        bool modeReady = type == 0x1700 ? (flags & 0x40) == 0 : TryReadPartMode(flags, out mode);
+        int initialOffset = type == 0x1700 ? 0x8b0 : mode.Alternate ? 0xf54 : 0xf50;
         int configuredInteger = type == 0x1700 ? R<int>(parameter + 0x8b0) : 0;
-        float configured = type == 0x1700 ? configuredInteger : R<float>(parameter + 0xf50);
+        float configured = type == 0x1700 ? configuredInteger : R<float>(parameter + initialOffset);
         var proof = _headProof;
-        // shortcut: alternate-mode maxima remain icon-only until their actual initialization is validated.
-        if ((flags & 0x40) != 0 || !float.IsFinite(configured) || configured is < 1 or > 1e9f ||
+        // shortcut: Behemoth's alternate integer source remains unverified; keep its status icon only.
+        if (!modeReady || !float.IsFinite(configured) || configured is < 1 or > 1e9f ||
             (type == 0x1700 && configuredInteger is < 1 or > 1000000000) || current > configured) proof = null;
         else
         {
@@ -161,7 +164,8 @@ public sealed class NativeStateReader(nint moduleBase)
             if (proof is { } p && broken) proof = p with { BrokenSeen = true };
         }
         if (R<float>(actor + currentOffset) != current || R<nint>(actor + 0x1598) != parameter ||
-            (type == 0x1700 ? R<int>(parameter + 0x8b0) != configuredInteger : !R<float>(parameter + 0xf50).Equals(configured)) || R<byte>(actor + 0xe) != flags ||
+            type != 0x1700 && (TryReadPartMode(flags, out var afterMode) != modeReady || afterMode != mode) ||
+            (type == 0x1700 ? R<int>(parameter + 0x8b0) != configuredInteger : !R<float>(parameter + initialOffset).Equals(configured)) || R<byte>(actor + 0xe) != flags ||
             R<nint>(actor + 0xcd8) != hb || R<nint>(actor + 0xce0) != he || (broken && R<int>(hb) != 0) ||
             R<nint>(actor + 0x788) != locks || R<nint>(actor + 0x790) != locksEnd || ids.Where((value, i) => R<int>(locks + i * 48) != value).Any() ||
             R<nint>(world.Player + 0x108) != scene || R<int>(world.Player + 0x118) != selected || R<nint>(scene + 0x70) != actor || R<nint>(actor) != vt ||
