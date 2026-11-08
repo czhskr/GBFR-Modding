@@ -13,7 +13,7 @@ static unsafe class PyetStateTest
         if (module == 0) throw new Exception("Pyet fixture reservation");
         try
         {
-            foreach (int page in new[] { 0x7362000, 0x7035000, 0x7020000, 0x7c53000 })
+            foreach (int page in new[] { 0x7362000, 0x7035000, 0x7020000, 0x7c53000, 0x7c23000 })
                 if (VirtualAlloc(module + page, 0x1000, 0x1000, 4) == 0) throw new Exception("Pyet fixture commit");
             nint vector = Alloc(8), player = Alloc(0x240), a = Alloc(8), b = Alloc(0x30), c = Alloc(0x20),
                 localScene = Alloc(0x80), localActor = Alloc(8), target = Alloc(0x80), actor = Alloc(0x4000),
@@ -122,7 +122,32 @@ static unsafe class PyetStateTest
             foreach (int id in new[] { 0, 3, 5, 785, -1 })
             { *(int*)(player + 0x118) = id; Reject("unverified Pyet mapping published"); }
             *(int*)(player + 0x118) = 772; *(nint*)actor = module + 0x5b09150; Reject("unverified Pyet class accepted");
-            Console.WriteLine("PASS: real-memory Pyet seven-part routing, stored/source initial, positive residual and independent processed breaks; unsupported mappings and invalid state rejected");
+            *(nint*)actor = module + 0x5b09148; *(byte*)(actor + 0xe) = 0x40;
+            *(nint*)(actor + 0xce0) = history; *(int*)(player + 0x118) = 772;
+            nint mode = Alloc(0x3000); *(nint*)(module + 0x7c23338) = mode;
+            int[] alternateInitial = [11000, 9000, 9000, 14500, 14500, 7600, 9000];
+            for (int i = 0; i < 7; i++)
+            {
+                *(float*)(parameter + 0xf60 + offsets[i]) = initial[i];
+                *(float*)(parameter + 0x13f8 + offsets[i]) = alternateInitial[i];
+                *(int*)(actor + 0x25b4 + i * 4) = *(int*)(actor + 0x25d0 + i * 4) = alternateInitial[i];
+            }
+            if (PercentageText.Percentage(Read("alternate Pyet head unavailable")) != 100) throw new Exception("source-matched alternate Pyet maximum omitted");
+            *(int*)(actor + 0x25cc) = 8800;
+            if (PercentageText.Percentage(Read("alternate Pyet damage unavailable")) != 97) throw new Exception("alternate Pyet damage denominator");
+            *(nint*)(module + 0x7c23338) = 1;
+            if (Read("unreadable alternate Pyet mode should keep icon").Fraction != null) throw new Exception("unreadable mode accepted alternate Pyet maximum");
+            *(nint*)(module + 0x7c23338) = mode;
+            if (PercentageText.Percentage(Read("alternate Pyet mode recovery")) != 97) throw new Exception("source-matched stored maximum did not recover");
+            *(int*)(actor + 0x25e8) = 8999;
+            if (Read("alternate stored mismatch should keep icon").Fraction != null) throw new Exception("alternate stored/source mismatch accepted");
+            *(int*)(actor + 0x25e8) = 9000; *(int*)(mode + 0x2de0) = 1; *(int*)(mode + 4) = 2;
+            if (Read("normal override with alternate stored state").Fraction != null) throw new Exception("override mixed alternate stored and normal source");
+            for (int i = 0; i < 7; i++) *(int*)(actor + 0x25b4 + i * 4) = *(int*)(actor + 0x25d0 + i * 4) = initial[i];
+            if (PercentageText.Percentage(Read("Pyet forced normal initializer")) != 100) throw new Exception("native override did not select normal Pyet maximum");
+            *(int*)(mode + 4) = 3;
+            if (Read("Pyet alternate source switch").Fraction != null) throw new Exception("alternate mode retained normal denominator");
+            Console.WriteLine("PASS: real-memory Pyet seven-part routing, normal/alternate stored/source initial, mode override/recovery, positive residual and independent processed breaks; invalid state rejected");
         }
         finally
         {

@@ -13,7 +13,7 @@ static unsafe class NativeStateTest
         if (module == 0) throw new Exception("fixture address reservation");
         try
         {
-            foreach (int page in new[] { 0x7362000, 0x7035000, 0x7020000, 0x7c53000 })
+            foreach (int page in new[] { 0x7362000, 0x7035000, 0x7020000, 0x7c53000, 0x7c23000 })
                 if (VirtualAlloc(module + page, 0x1000, 0x1000, 4) == 0) throw new Exception("fixture page commit");
             nint vector = Alloc(128), player = Alloc(0x240), a = Alloc(8), b = Alloc(0x30), c = Alloc(0x20), worldScene = Alloc(0x80),
                 worldActor = Alloc(8), target = Alloc(0x80), actor = Alloc(0x3000), other = Alloc(0x3000), parameter = Alloc(0x900);
@@ -160,6 +160,31 @@ static unsafe class NativeStateTest
                 *(int*)(actor + 0x2a9c) = 600;
                 if (ReadPart(9).Initial != null) throw new Exception("body selection missed range proof invalidation");
             }
+            nint mode = Alloc(0x3000); *(nint*)(module + 0x7c23338) = mode;
+            foreach (int vt in new[] { 0x61528a8, 0x6150b68, 0x6151ee8 })
+            {
+                *(nint*)actor = module + vt; *(byte*)(actor + 0xe) = 0x40; *(byte*)(parameter + 0x8c8) = 1;
+                for (int i = 0; i < 3; i++) { *(float*)(parameter + 0x8bc + i * 4) = 5000; *(int*)(actor + 0x2a98 + i * 4) = 5000; }
+                reader = new NativeStateReader(module);
+                if (ReadPart(2628).Initial != 5000) throw new Exception("source-matched alternate crocodile maximum omitted");
+                *(int*)(actor + 0x2a98) = 4800;
+                if (PercentageText.Percentage(PartStatePolicy.Evaluate(ReadPart(2628))) != 96) throw new Exception("alternate crocodile damage denominator");
+                if (PercentageText.Percentage(PartStatePolicy.Evaluate(ReadPart(13))) != 100) throw new Exception("alternate crocodile independent initial");
+                *(nint*)(module + 0x7c23338) = 1;
+                if (ReadPart(2628).Initial != null) throw new Exception("unreadable mode retained alternate proof");
+                *(nint*)(module + 0x7c23338) = mode;
+                if (ReadPart(2628).Initial != null) throw new Exception("alternate proof invented after unavailable context");
+                *(int*)(mode + 0x2de0) = 1; *(int*)(mode + 4) = 2;
+                for (int i = 0; i < 3; i++) *(int*)(actor + 0x2a98 + i * 4) = maxima[i];
+                if (ReadPart(2628).Initial != 1500) throw new Exception("native override did not select normal crocodile maximum");
+                *(int*)(mode + 4) = 3;
+                if (ReadPart(2628).Initial != null) throw new Exception("mode switch reused normal crocodile proof");
+                *(int*)(mode + 0x2de0) = 0; *(byte*)(parameter + 0x8c8) = 0;
+                if (ReadPart(2628).Initial != 1500) throw new Exception("disabled alternate setting should select normal source");
+                *(byte*)(parameter + 0x8c8) = 2;
+                if (ReadPart(2628).Initial != null) throw new Exception("invalid alternate-enabled flag accepted");
+            }
+            *(byte*)(actor + 0xe) = 0; *(byte*)(parameter + 0x8c8) = 0; *(nint*)(module + 0x7c23338) = 0;
             *(nint*)actor = module + 0x6150b68; *(int*)(player + 0x118) = 9;
             *(nint*)(actor + 0xcd8) = 0; *(nint*)(actor + 0xce0) = 0;
             for (int i = 0; i < 3; i++) *(int*)(actor + 0x2a98 + i * 4) = maxima[i];

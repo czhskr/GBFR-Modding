@@ -18,6 +18,18 @@ public sealed class NativeStateReader(nint moduleBase)
     private bool Reject() { ClearProof(); return false; }
     private bool RejectWorld() { ClearAllProofs(); return false; }
 
+    private bool TryReadPartMode(byte flags, out (nint Context, int Mode, int Submode, bool Alternate) state)
+    {
+        state = default;
+        if ((flags & 0x40) == 0) return true;
+        if (!ProcessMemory.TryRead<nint>(moduleBase + 0x7c23338, out var context) || context == 0 ||
+            !ProcessMemory.TryRead<int>(context + 0x2de0, out var mode) ||
+            !ProcessMemory.TryRead<int>(context + 4, out var submode)) return false;
+        // The native initializers can force the normal source despite the alternate actor flag.
+        state = (context, mode, submode, !(mode == 1 && submode < 3));
+        return true;
+    }
+
     public bool TryReadWorld(out WorldIdentity world)
     {
         world = default;
@@ -187,14 +199,16 @@ public sealed class NativeStateReader(nint moduleBase)
         }
         int[] current = new int[3]; float[] configured = new float[3];
         nint parameter = R<nint>(actor + 0x1598); byte flags = R<byte>(actor + 0xe);
+        bool modeReady = TryReadPartMode(flags, out var mode);
+        byte alternateEnabled = mode.Alternate ? R<byte>(parameter + 0x8c8) : (byte)0;
+        int initialOffset = mode.Alternate && (alternateEnabled & 1) != 0 ? 0x8bc : 0x8b0;
         for (int i = 0; i < 3; i++)
         {
-            current[i] = R<int>(actor + 0x2a98 + i * 4); configured[i] = R<float>(parameter + 0x8b0 + i * 4);
+            current[i] = R<int>(actor + 0x2a98 + i * 4); configured[i] = R<float>(parameter + initialOffset + i * 4);
             if (current[i] is < 0 or > 1000000000) return Reject();
         }
         var proof = _proof;
-        // shortcut: alternate-mode initial values remain unverified; keep the state icon without a percentage.
-        if ((flags & 0x40) != 0 || configured.Any(x => !float.IsFinite(x) || x is < 1 or > 1e9f)) proof = null;
+        if (!modeReady || alternateEnabled > 1 || configured.Any(x => !float.IsFinite(x) || x is < 1 or > 1e9f)) proof = null;
         else
         {
             int[] initial = configured.Select(x => (int)x).ToArray();
@@ -210,8 +224,10 @@ public sealed class NativeStateReader(nint moduleBase)
             }
         }
         if (R<nint>(actor + 0x1598) != parameter || R<byte>(actor + 0xe) != flags ||
+            TryReadPartMode(flags, out var afterMode) != modeReady || afterMode != mode ||
+            mode.Alternate && R<byte>(parameter + 0x8c8) != alternateEnabled ||
             current.Where((value, i) => R<int>(actor + 0x2a98 + i * 4) != value).Any() ||
-            configured.Where((value, i) => !R<float>(parameter + 0x8b0 + i * 4).Equals(value)).Any() ||
+            configured.Where((value, i) => !R<float>(parameter + initialOffset + i * 4).Equals(value)).Any() ||
             R<nint>(actor + 0xcd8) != hb || R<nint>(actor + 0xce0) != he || history.Where((value, i) => R<int>(hb + i * 4) != value).Any() ||
             R<nint>(actor + 0x788) != locks || R<nint>(actor + 0x790) != locksEnd || ids.Where((value, i) => R<int>(locks + i * 48) != value).Any() ||
             R<nint>(world.Player + 0x108) != scene || R<int>(world.Player + 0x118) != selected || R<nint>(scene + 0x70) != actor || R<nint>(actor) != vt ||
@@ -390,22 +406,24 @@ public sealed class NativeStateReader(nint moduleBase)
         }
         nint parameter = R<nint>(actor + 0x1598); byte flags = R<byte>(actor + 0xe);
         int[] offsets = [0x20, 0x10, 0x14, 0x18, 0x1c, 0xc, 8];
+        bool modeReady = TryReadPartMode(flags, out var mode);
+        int initialOffset = mode.Alternate ? 0x13f8 : 0xf60;
         int[] current = new int[7], stored = new int[7]; float[] configured = new float[7];
         for (int i = 0; i < 7; i++)
         {
             current[i] = R<int>(actor + 0x25b4 + i * 4); stored[i] = R<int>(actor + 0x25d0 + i * 4);
-            configured[i] = R<float>(parameter + 0xf60 + offsets[i]);
+            configured[i] = R<float>(parameter + initialOffset + offsets[i]);
             if (current[i] is < 0 or > 1000000000) return Reject();
         }
-        // shortcut: the Hell initializer branch remains icon-only until its runtime values are validated.
-        bool verified = (flags & 0x40) == 0 && configured.All(x => float.IsFinite(x) && x is >= 1 and <= 1e9f) &&
+        bool verified = modeReady && configured.All(x => float.IsFinite(x) && x is >= 1 and <= 1e9f) &&
             !stored.Where((value, i) => value != (int)configured[i]).Any() && !current.Where((value, i) => value > stored[i]).Any();
         bool broken = current[index] == 0 && (seen & (1 << index)) != 0;
         if (current[index] == 0 && !broken) return false;
         if (R<nint>(actor + 0x1598) != parameter || R<byte>(actor + 0xe) != flags ||
+            TryReadPartMode(flags, out var afterMode) != modeReady || afterMode != mode ||
             current.Where((value, i) => R<int>(actor + 0x25b4 + i * 4) != value).Any() ||
             stored.Where((value, i) => R<int>(actor + 0x25d0 + i * 4) != value).Any() ||
-            configured.Where((value, i) => !R<float>(parameter + 0xf60 + offsets[i]).Equals(value)).Any() ||
+            configured.Where((value, i) => !R<float>(parameter + initialOffset + offsets[i]).Equals(value)).Any() ||
             R<nint>(actor + 0xcd8) != hb || R<nint>(actor + 0xce0) != he || history.Where((value, i) => R<int>(hb + i * 4) != value).Any() ||
             R<nint>(actor + 0x788) != locks || R<nint>(actor + 0x790) != locksEnd || ids.Where((value, i) => R<int>(locks + i * 48) != value).Any() ||
             R<nint>(world.Player + 0x108) != scene || R<int>(world.Player + 0x118) != selected || R<nint>(scene + 0x70) != actor || R<nint>(actor) != vt ||
