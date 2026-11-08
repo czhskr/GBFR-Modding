@@ -1,0 +1,14 @@
+{
+  "ModId": "gbfr.part-break-indicator",
+  "ModName": "Part Break Indicator",
+  "ModAuthor": "czhskr",
+  "ModVersion": "0.1.0",
+  "ModDescription": "Displays part-break status for supported lock-on parts, with a durability gauge where the initial value is verified.",
+  "ModDll": "PartIndicator.dll",
+  "ModDependencies": ["reloaded.sharedlib.hooks", "gbfrelink.utility.manager"],
+  "OptionalDependencies": [],
+  "SupportedAppId": ["granblue_fantasy_relink.exe"],
+  "CanUnload": false,
+  "HasExports": false,
+  "IsLibrary": false
+}

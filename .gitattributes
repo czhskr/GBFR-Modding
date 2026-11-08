@@ -1,0 +1,5 @@
+# Preserve the exact bytes used by the recorded SHA-256 checkpoints.
+* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+*.png binary
+*.wtb binary
+*.texb binary

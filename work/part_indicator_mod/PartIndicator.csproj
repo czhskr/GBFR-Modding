@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework><PlatformTarget>x64</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+    <AssemblyName>PartIndicator</AssemblyName><Version>0.1.0</Version><DebugType>portable</DebugType>
+    <ReloadedDirectory Condition="'$(ReloadedDirectory)' == ''">$(UserProfile)\Desktop\Tools\Reloaded-II</ReloadedDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="assets/GBFR/**/*" Link="GBFR/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Remove="Tests/**/*.cs" />
+    <Reference Include="Reloaded.Mod.Interfaces"><HintPath>$(ReloadedDirectory)\Loader\X64\Reloaded.Mod.Interfaces.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Reloaded.Hooks.Definitions"><HintPath>$(ReloadedDirectory)\Mods\reloaded.sharedlib.hooks\x64\Reloaded.Hooks.Definitions.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Reloaded.Hooks.ReloadedII.Interfaces"><HintPath>$(ReloadedDirectory)\Mods\reloaded.sharedlib.hooks\x64\Reloaded.Hooks.ReloadedII.Interfaces.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

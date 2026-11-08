@@ -16,7 +16,13 @@ Enables the game's usual Skip input for unread Fate Episodes.
 
 ## In Development
 
-More mods are currently in development. Details will be added as they progress.
+### Part Break Indicator
+
+Displays status and verified remaining durability for supported lock-on parts.
+Development checkpoints are available; this is not a public release.
+
+[Source and build notes](work/part_indicator_mod/README.md) ·
+[Checkpoints](docs/checkpoints/)
 
 ## Development
 
