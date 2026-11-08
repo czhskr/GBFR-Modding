@@ -147,12 +147,12 @@ public sealed class NativeStateReader(nint moduleBase)
         if (!float.IsFinite(current) || current is < 0 or > 1e9f) return Reject();
         nint parameter = R<nint>(actor + 0x1598); byte flags = R<byte>(actor + 0xe);
         (nint Context, int Mode, int Submode, bool Alternate) mode = default;
-        bool modeReady = type == 0x1700 ? (flags & 0x40) == 0 : TryReadPartMode(flags, out mode);
+        bool modeReady = type == 0x1700 || TryReadPartMode(flags, out mode);
         int initialOffset = type == 0x1700 ? 0x8b0 : mode.Alternate ? 0xf54 : 0xf50;
         int configuredInteger = type == 0x1700 ? R<int>(parameter + 0x8b0) : 0;
         float configured = type == 0x1700 ? configuredInteger : R<float>(parameter + initialOffset);
         var proof = _headProof;
-        // shortcut: Behemoth's alternate integer source remains unverified; keep its status icon only.
+        // Em1700's native initializer uses the same integer source in both modes.
         if (!modeReady || !float.IsFinite(configured) || configured is < 1 or > 1e9f ||
             (type == 0x1700 && configuredInteger is < 1 or > 1000000000) || current > configured) proof = null;
         else
@@ -321,7 +321,7 @@ public sealed class NativeStateReader(nint moduleBase)
         nint parameter = R<nint>(actor + 0x1598);
         if (parameter == 0) return Reject();
         byte flags = R<byte>(actor + 0xe); int configured = R<int>(parameter + 0x5978);
-        bool verified = (flags & 0x40) == 0 && configured is >= 1 and <= 1000000000 && current <= configured;
+        bool verified = configured is >= 1 and <= 1000000000 && current <= configured;
         if (R<int>(moduleBase + 0x7c28684) != epoch || R<uint>(moduleBase + 0x7c28680) != key ||
             FindStateComponent(actor, key) != component || FindStateIntNode(component, 0x76033489) != node || R<int>(node + 0x14) != current ||
             R<nint>(actor + 0x648) != owner || R<nint>(owner) != obj || R<nint>(obj + 0x28) != context || R<nint>(context + 0x18) != scene ||
@@ -363,7 +363,7 @@ public sealed class NativeStateReader(nint moduleBase)
         {
             marker = R<byte>(actor + 0x9996); configured = R<int>(parameter + 0xbf0);
             if (marker > 1) return Reject();
-            verified = (flags & 0x40) == 0 && configured is >= 1 and <= 1000000000 && current <= configured;
+            verified = configured is >= 1 and <= 1000000000 && current <= configured;
         }
         else
         {

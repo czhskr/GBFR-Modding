@@ -68,8 +68,23 @@ static unsafe class TayuitarStateTest
             var broken = Read("Tayu processed head unavailable");
             if (!broken.Broken || PercentageText.Percentage(broken) != null) throw new Exception("Tayu second hit processed marker");
             *(byte*)(actor + 0x9996) = 2; Reject("Tayu invalid processed marker accepted"); *(byte*)(actor + 0x9996) = 0;
-            *(int*)(actor + 0x9420) = 80; *(byte*)(actor + 0xe) = 0x40;
-            if (Read("Tayu alternate source should keep icon").Fraction != null) throw new Exception("unverified Tayu alternate percentage"); *(byte*)(actor + 0xe) = 0;
+            *(int*)(actor + 0x9420) = 160; *(byte*)(actor + 0xe) = 0x40;
+            if (PercentageText.Percentage(Read("Carnage head source unavailable")) != 100) throw new Exception("Carnage native head initial omitted");
+            *(int*)(actor + 0x9420) = 80;
+            if (PercentageText.Percentage(Read("Carnage damaged head unavailable")) != 50) throw new Exception("Carnage head used a leg maximum");
+            *(nint*)(player + 0x108) = 0; Reject("Carnage no-lock displayed"); *(nint*)(player + 0x108) = target;
+            if (PercentageText.Percentage(Read("Carnage head relock unavailable")) != 50) throw new Exception("Carnage head relock lost source");
+            foreach (var (selected, index) in new[] { (787, 2), (1043, 3), (1296, 4), (1552, 5) })
+            {
+                *(int*)(player + 0x118) = selected; nint row = actor + 0x6a68 + index * 40;
+                *(int*)row = *(int*)(row + 4) = 1000;
+                if (Read("Carnage leg unavailable") is not { Visible: true, Broken: false, Fraction: null }) throw new Exception("Carnage leg acquired an unverified percentage");
+            }
+            *(int*)(player + 0x118) = 7; *(int*)(actor + 0x9420) = 0;
+            if (Read("Carnage unprocessed zero unavailable").Broken) throw new Exception("Carnage zero bypassed processed marker");
+            *(byte*)(actor + 0x9996) = 1;
+            if (Read("Carnage processed head unavailable") is not { Broken: true, Fraction: null }) throw new Exception("Carnage processed head retained percentage");
+            *(byte*)(actor + 0x9996) = 0; *(int*)(actor + 0x9420) = 80;
             *(int*)(parameter + 0xbf0) = 0;
             if (Read("Tayu invalid source should keep icon").Fraction != null) throw new Exception("Tayu invalid denominator"); *(int*)(parameter + 0xbf0) = 160;
             *(int*)(actor + 0x9420) = 161;
@@ -80,7 +95,7 @@ static unsafe class TayuitarStateTest
             *(nint*)(actor + 0x790) = entries + 49; Reject("Tayu misaligned lock vector accepted"); *(nint*)(actor + 0x790) = entries + 5 * 48;
             foreach (int id in new[] { -1, 0, 1792, 265 }) { *(int*)(player + 0x118) = id; Reject("Tayu metadata/equipment/unmapped selection accepted"); }
             *(int*)(player + 0x118) = 7; *(nint*)actor = module + 0x5b77240; Reject("unknown Tayu class accepted");
-            Console.WriteLine("PASS: real-memory Tayu four-leg icons with stale maxima omitted, head source160 and zero-before-processing, actual break marker; invalid/unknown/disabled/stale state rejected");
+            Console.WriteLine("PASS: real-memory Tayu/Carnage head source160/relock and four-leg icons with stale maxima omitted, zero-before-processing and actual break marker; invalid/unknown/disabled/stale state rejected");
         }
         finally { foreach (nint p in allocations) NativeMemory.Free((void*)p); VirtualFree(module, 0, 0x8000); }
     }

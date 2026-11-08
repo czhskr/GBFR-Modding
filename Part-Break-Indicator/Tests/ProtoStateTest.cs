@@ -74,16 +74,33 @@ static unsafe class ProtoStateTest
             *(nint*)(actor + 0x648) = 0; Reject("Proto missing native owner accepted"); *(nint*)(actor + 0x648) = owner;
             *(nint*)(context + 0x18) = localScene; Reject("Proto wrong native owner scene accepted"); *(nint*)(context + 0x18) = target;
             *(byte*)(actor + 0xe) = 0x40;
-            if (Read("Proto alternate source should retain icon").Fraction != null) throw new Exception("Proto unverified alternate percentage"); *(byte*)(actor + 0xe) = 0;
+            *(int*)(counter + 0x14) = 17000;
+            if (PercentageText.Percentage(Read("Proto Chaos++ initial unavailable")) != 100) throw new Exception("Proto verified Chaos++ initial omitted");
+            *(int*)(counter + 0x14) = 16700;
+            if (PercentageText.Percentage(Read("Proto Chaos++ damage unavailable")) != 98) throw new Exception("Proto captured Chaos++ denominator");
+            *(nint*)(player + 0x108) = 0; Reject("Proto Chaos++ no-lock displayed"); *(nint*)(player + 0x108) = target;
+            if (PercentageText.Percentage(Read("Proto Chaos++ relock unavailable")) != 98) throw new Exception("Proto Chaos++ relock lost current/source");
+            *(int*)(counter + 0x14) = 1;
+            if (Read("Proto Chaos++ protected head unavailable") is not { Broken: false } || PercentageText.Percentage(Read("Proto Chaos++ protected value unavailable")) != 1)
+                throw new Exception("Proto Chaos++ minimum became destruction");
+            *(int*)(counter + 0x14) = 0; Reject("Proto Chaos++ reset zero without history published");
+            *(int*)history = 0; *(nint*)(actor + 0xce0) = history + 4;
+            if (Read("Proto Chaos++ processed head unavailable") is not { Broken: true, Fraction: null }) throw new Exception("Proto Chaos++ processed head retained percentage");
+            *(nint*)(actor + 0xce0) = history; *(int*)(counter + 0x14) = 16700;
             *(int*)(parameter + 0x5978) = 0;
             if (Read("Proto unknown source should retain icon").Fraction != null) throw new Exception("Proto invalid initial percentage"); *(int*)(parameter + 0x5978) = 17000;
+            *(int*)(parameter + 0x5978) = 1000000001;
+            if (Read("Proto oversized source should retain icon").Fraction != null) throw new Exception("Proto oversized initial percentage"); *(int*)(parameter + 0x5978) = 17000;
+            *(int*)(counter + 0x14) = 17001;
+            if (Read("Proto current above source should retain icon").Fraction != null) throw new Exception("Proto current above source percentage");
+            *(byte*)(actor + 0xe) = 0;
             *(int*)(counter + 0x14) = -1; Reject("Proto negative current accepted"); *(int*)(counter + 0x14) = 16625;
             *(byte*)(locks + 0x29) = 0; Reject("Proto disabled lock accepted"); *(byte*)(locks + 0x29) = 1;
             *(ulong*)(stamps + 24) = 201; Reject("Proto stale target accepted"); *(ulong*)(stamps + 24) = 200;
             foreach (int id in new[] { -1, 256, 512, 912, 2049, 2614, 2672 })
             { *(int*)(player + 0x118) = id; *(int*)locks = id; Reject("Proto metadata/unverified selection accepted"); }
             *(int*)(player + 0x118) = 2048; *(int*)locks = 2048; *(nint*)actor = module + 0x5a9d690; Reject("unknown Proto class accepted");
-            Console.WriteLine("PASS: real-memory Proto typed owner/registry/counter, source17000, protected1% and processed history0; initialization, cycles, duplicates, stale/unknown state rejected");
+            Console.WriteLine("PASS: real-memory Proto normal/Chaos++ owned counter and typed source, relock, protected1% and processed history0; initialization, cycles, duplicates, stale/unknown state rejected");
         }
         finally { foreach (nint p in allocations) NativeMemory.Free((void*)p); VirtualFree(module, 0, 0x8000); }
     }

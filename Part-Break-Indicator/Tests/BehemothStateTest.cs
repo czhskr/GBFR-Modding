@@ -68,9 +68,24 @@ static unsafe class BehemothStateTest
             if (Read().Initial != null) throw new Exception("Behemoth proof survived broken-history reset");
             reader = new NativeStateReader(module);
             if (Read().Initial != null) throw new Exception("late damaged Behemoth invented maximum");
-            *(float*)(actor + 0x2660) = 14000; Read(); *(byte*)(actor + 0xe) = 0x40; Body();
+            *(byte*)(actor + 0xe) = 0x40; *(float*)(actor + 0x2660) = 14000;
+            reader = new NativeStateReader(module);
+            if (PercentageText.Percentage(PartStatePolicy.Evaluate(Read())) != 100) throw new Exception("Ennugi verified integer initial omitted");
+            *(float*)(actor + 0x2660) = 13700.0302734375f;
+            if (PercentageText.Percentage(PartStatePolicy.Evaluate(Read())) != 97) throw new Exception("Ennugi captured float denominator");
+            Body();
+            if (Read().Initial != 14000) throw new Exception("Ennugi body return lost shared source proof");
+            *(nint*)(player + 0x108) = 0;
+            if (reader.TryReadSnapshot(world, 1, out _)) throw new Exception("Ennugi no-lock visible");
+            *(nint*)(player + 0x108) = target;
+            if (PercentageText.Percentage(PartStatePolicy.Evaluate(Read())) != 97) throw new Exception("Ennugi relock lost shared source proof");
+            reader = new NativeStateReader(module);
+            if (Read().Initial != null) throw new Exception("late damaged Ennugi invented maximum");
+            *(float*)(actor + 0x2660) = 14000; Read(); *(int*)(parameter + 0x8b0) = 0;
+            if (Read().Initial != null) throw new Exception("invalid Ennugi integer source retained proof");
+            *(int*)(parameter + 0x8b0) = 14000; Read(); Body();
             *(byte*)(actor + 0xe) = 0; *(float*)(actor + 0x2660) = 7000;
-            if (Read().Initial != null) throw new Exception("Behemoth body missed alternate invalidation");
+            if (Read().Initial != 14000) throw new Exception("shared Behemoth integer source lost across flag change");
             *(float*)(actor + 0x2660) = 14000; Read(); *(int*)(parameter + 0x8b0) = 16000; *(float*)(actor + 0x2660) = 7000;
             if (Read().Initial != null) throw new Exception("Behemoth int parameter change retained old proof");
             *(int*)(parameter + 0x8b0) = 1000000001; *(float*)(actor + 0x2660) = 1e9f;
@@ -92,7 +107,7 @@ static unsafe class BehemothStateTest
             }
             *(float*)(actor + 0x2660) = 14000; *(nint*)actor = module + 0x5b020a0;
             if (reader.TryReadSnapshot(world, 1, out _)) throw new Exception("unverified Behemoth class accepted");
-            Console.WriteLine("PASS: real-memory Behemoth typed initial/float damage, processed head break, body duplicate IDs and proof retention; stale/unknown/invalid inputs rejected");
+            Console.WriteLine("PASS: real-memory Behemoth/Ennugi typed initial/float damage, relock/source proof, processed head break and body duplicate IDs; stale/unknown/invalid inputs rejected");
         }
         finally
         {
