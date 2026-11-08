@@ -2,7 +2,8 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework><PlatformTarget>x64</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
-    <AssemblyName>PartIndicator</AssemblyName><Version>0.1.0</Version><DebugType>portable</DebugType>
+    <AssemblyName>PartIndicator</AssemblyName><Version>1.0.0</Version><DebugType>portable</DebugType>
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
     <ReloadedDirectory Condition="'$(ReloadedDirectory)' == ''">$(UserProfile)\Desktop\Tools\Reloaded-II</ReloadedDirectory>
   </PropertyGroup>
   <ItemGroup>
