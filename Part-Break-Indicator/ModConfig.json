@@ -2,7 +2,7 @@
   "ModId": "gbfr.part-break-indicator",
   "ModName": "Part Break Indicator",
   "ModAuthor": "czhskr",
-  "ModVersion": "1.0.0",
+  "ModVersion": "1.0.1",
   "ModDescription": "Displays part-break status for supported lock-on parts, with remaining durability shown as a percentage when the initial value is verified.",
   "ModDll": "PartIndicator.dll",
   "ModDependencies": ["reloaded.sharedlib.hooks", "gbfrelink.utility.manager"],

@@ -20,7 +20,7 @@ Download the mod and see the supported boss list on [Nexus Mods](https://www.nex
 
 ## Source
 
-The current source contains a post-1.0.0 startup safety change that has passed isolated tests but has not yet been verified in-game. The published 1.0.0 release does not include it.
+Version 1.0.1 includes a startup safety fix that prevents resuming the indicator if required initialization fails. The fix was tested in isolation and in-game using a diagnostic build based on the same implementation.
 
 This repository preserves the source and tests but excludes development assets and test data. Reloaded-II dependencies and additional local files are required to build and run all tests; the repository alone cannot reproduce the complete mod package.
 
