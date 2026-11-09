@@ -34,10 +34,24 @@ Work on skipping post-battle dialogue will resume after my current mod project i
 - [Reloaded-II](https://github.com/Reloaded-Project/Reloaded-II)
 - [Endless Ragnarok Mod Loader](https://www.nexusmods.com/granbluefantasyrelink/mods/526)
 
+## Installation
+
+1. Close the game.
+2. Install the mod ZIP through Reloaded-II and enable the mod and its required dependencies.
+3. Launch the game through Reloaded-II.
+
+To remove or fully disable the mod, close the game first. Unloading it completely while the game is running is not supported.
+
 ## Downloads
 
 [Download on Nexus Mods](https://www.nexusmods.com/granbluefantasyrelink/mods/890) ·
-[GitHub Releases](https://github.com/czhskr/GBFR-Modding/releases)
+[GitHub release](https://github.com/czhskr/GBFR-Modding/releases/tag/unread-fate-skip-v1.0.0)
+
+## Source
+
+This folder preserves the local C# project, configuration, and test source. The local Release DLL matches the DLL in the published ZIP. The exact Git source commit used to build that DLL is not recorded, and a new build is not guaranteed to be byte-identical to the release.
+
+The project targets .NET 9 and references locally installed Reloaded-II assemblies. The test project runs with `dotnet run --project Tests/FateSkip.Tests.csproj -c Release` from this folder.
 
 ## Development and AI Disclosure
 

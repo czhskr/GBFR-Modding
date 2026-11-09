@@ -1,0 +1,14 @@
+{
+  "ModId": "gbfr.fate.first-view-skip",
+  "ModName": "Fate Episode Skip Unlocker",
+  "ModAuthor": "czhskr",
+  "ModVersion": "1.0.0",
+  "ModDescription": "Enables skipping unread Fate Episode dialogue through the game's normal skip flow, preserving completion, progression, and reward handling.",
+  "ModDll": "FateSkip.dll",
+  "ModDependencies": ["reloaded.sharedlib.hooks"],
+  "OptionalDependencies": [],
+  "SupportedAppId": ["granblue_fantasy_relink.exe"],
+  "CanUnload": false,
+  "HasExports": false,
+  "IsLibrary": false
+}

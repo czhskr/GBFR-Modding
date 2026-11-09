@@ -34,10 +34,24 @@
 - [Reloaded-II](https://github.com/Reloaded-Project/Reloaded-II)
 - [Endless Ragnarok Mod Loader](https://www.nexusmods.com/granbluefantasyrelink/mods/526)
 
+## 설치
+
+1. 게임을 종료합니다.
+2. Reloaded-II에서 모드 ZIP을 설치하고 모드와 필수 의존성을 활성화합니다.
+3. Reloaded-II를 통해 게임을 실행합니다.
+
+모드를 삭제하거나 완전히 비활성화하려면 먼저 게임을 종료하세요. 게임 실행 중 완전한 언로드는 지원하지 않습니다.
+
 ## 다운로드
 
 [Nexus Mods에서 다운로드](https://www.nexusmods.com/granbluefantasyrelink/mods/890) ·
-[GitHub Releases](https://github.com/czhskr/GBFR-Modding/releases)
+[GitHub 릴리즈](https://github.com/czhskr/GBFR-Modding/releases/tag/unread-fate-skip-v1.0.0)
+
+## 소스
+
+이 폴더는 로컬 C# 프로젝트와 설정, 테스트 소스를 보관합니다. 로컬 Release DLL은 배포 ZIP의 DLL과 일치합니다. 해당 DLL을 빌드한 정확한 Git 소스 커밋은 기록되어 있지 않으며, 새로 빌드한 파일이 배포본과 바이트 단위로 동일하다고 보장할 수 없습니다.
+
+프로젝트는 .NET 9을 대상으로 하며 로컬에 설치된 Reloaded-II 어셈블리를 참조합니다. 이 폴더에서 `dotnet run --project Tests/FateSkip.Tests.csproj -c Release`로 테스트 프로젝트를 실행할 수 있습니다.
 
 ## 개발 및 AI 사용 안내
 
