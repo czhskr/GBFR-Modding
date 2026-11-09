@@ -53,6 +53,8 @@ This folder preserves the local C# project, configuration, and test source. The 
 
 The project targets .NET 9 and references locally installed Reloaded-II assemblies. The test project runs with `dotnet run --project Tests/FateSkip.Tests.csproj -c Release` from this folder.
 
+[Research notes: Fate Episode Skip conditions](../research/gbfr/fate-episode-skip.en.md) · [한국어](../research/gbfr/fate-episode-skip.md)
+
 ## Development and AI Disclosure
 
 I developed this mod with assistance from Codex. I defined the goals and

@@ -2,10 +2,11 @@
 
 [한국어](README.md)
 
-These notes cover lock-on target identification, boss part state, and the lifetime of indicators built with the existing UI. They describe static analysis and limited runtime observations of one executable, not an engine API specification for every enemy, quest, or form.
+These notes cover lock-on target identification, boss part state, the lifetime of indicators built with the existing UI, and Fate Episode Skip conditions. They describe static analysis and limited runtime observations of one executable, not an engine API specification for the whole game.
 
 - [Lock-on and part state](lock-on-and-part-state.en.md)
 - [Native UI ownership and lifecycle](native-ui-lifecycle.en.md)
+- [Fate Episode Skip conditions](fate-episode-skip.en.md)
 
 ## Target and environment
 
@@ -25,7 +26,7 @@ These were not controlled compatibility experiments covering all game installati
 
 - **Static finding:** instructions, RTTI, constructors, call paths, or configuration consumption inspected for the identified executable.
 - **Runtime observation:** value changes tracked with an object's identity and lifetime token, or behavior seen on screen. Samples are limited and not exhaustive.
-- **Implementation policy:** checks, hiding, caching, and waiting rules adopted by Part Break Indicator, not universal engine guarantees.
+- **Implementation policy:** checks and behavior rules adopted by each mod, not universal engine guarantees.
 - **Interpretation or hypothesis:** an explanation joining evidence that has not been established as a direct contract.
 - **Unverified:** cases or relationships for which evidence is not yet available. Failure to find an item does not prove it is absent.
 

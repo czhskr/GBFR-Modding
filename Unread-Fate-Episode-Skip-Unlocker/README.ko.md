@@ -53,6 +53,8 @@
 
 프로젝트는 .NET 9을 대상으로 하며 로컬에 설치된 Reloaded-II 어셈블리를 참조합니다. 이 폴더에서 `dotnet run --project Tests/FateSkip.Tests.csproj -c Release`로 테스트 프로젝트를 실행할 수 있습니다.
 
+[연구자료: 페이트 에피소드 스킵 조건](../research/gbfr/fate-episode-skip.md) · [English](../research/gbfr/fate-episode-skip.en.md)
+
 ## 개발 및 AI 사용 안내
 
 이 모드는 Codex의 도움을 받아 개발했습니다. 제가 목표와 요구사항을 정하고,
