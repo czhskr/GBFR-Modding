@@ -37,7 +37,7 @@ Part connections are checked against the selection ID, exact runtime type, state
 
 Rechecking identities before and after a read is an implementation defense against reused addresses and targets changing during observation; a successful memory read does not itself establish object type, ownership, or synchronization. In-process memory and hook tests are separate from observations in the game.
 
-Quadruped Furycane head damage and break transitions were checked for the normal and Nihilla forms using a temporary development lock-on. Natural recovery was also observed for Nihilla after the temporary unlock was removed. Natural reselection and the HUD after recovery remain unverified; see [lock-on and part state](lock-on-and-part-state.en.md).
+Quadruped Furycane head damage and break transitions were checked for the normal and Nihilla forms using a temporary development-only unlock of the lock-on target. Natural recovery was also observed for Nihilla after the unlock was removed. Natural reselection and the HUD after recovery remain unverified; see [lock-on and part state](lock-on-and-part-state.en.md).
 
 ## Reproducing the public source
 
@@ -45,7 +45,7 @@ The repository contains C# source, project files, test source, and mod configura
 
 The initial research source and test project compiled with locally installed Reloaded-II assemblies with zero errors and four `NU1900` warnings because the NuGet vulnerability data service was unreachable. Separate local records for the 1.0.0 release candidate report a Release build and 21 regression test groups. Locking on to Angra Mainyu's head and opening and closing the menu were also checked after installing the release ZIP. Those results used local data and already installed dependencies; they do not establish standalone reproduction from the public repository.
 
-A test run with the public folder as its working directory stopped because `resource_validation.json`, required for percentage-resource validation, was missing. Subsequent tests were not recorded as complete. Tests requiring the custom Angra atlas also cannot be completed with the public material alone.
+A test run of the initial research source `70f96f8`, using the public folder as its working directory, stopped because `resource_validation.json`, required for percentage-resource validation, was missing. The remaining full test run was not completed. This was separate from the 1.0.0 local tests above. Tests requiring the custom Angra atlas also cannot be completed with the public material alone.
 
 See the [project](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/PartIndicator.csproj), [test entry point](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/Tests/Program.cs), [percentage tests](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/Tests/PercentageTextTest.cs), and [custom resource tests](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/Tests/HeadAssetsTest.cs).
 

@@ -16,7 +16,7 @@ Parent/child hierarchy attachment, registration with a manager, and inclusion in
 
 ## Why a fixed UI thread or global stop point cannot be assumed
 
-**Runtime observation:** Samples show that UI creation, controller updates, and destruction cannot be assumed to run on a single fixed thread. Even after a UI work join, resource work and resource-mutex ownership overlapped. Native destruction also overlapped other rendering work.
+**Runtime observation:** Samples show that UI creation, controller updates, and destruction cannot be assumed to run on a single fixed thread. Even after a UI work join, where a set of UI tasks has completed, resource work and resource-mutex ownership overlapped. Native destruction also overlapped other rendering work.
 
 Being after a UI update does not imply that all UI, resource, and render work has stopped. An intermediate unlock of a recursive mutex is not proof of final release or completion of all work.
 
@@ -48,7 +48,7 @@ The custom atlas request entry hook is `0x25374A0`; the readiness-check call is 
 
 **Static finding:** In Tayu'itar's common recovery function, the instruction immediately following the fourth leg's current-value write is at RVA `0x2D35B84`. At that point RSI holds the object and EAX the value calculated by the game and written to the legs.
 
-**Implementation policy:** An optional interior hook reads this value and checks the supported build, instruction bytes, and object/cycle relationship. Without a trustworthy observation, the leg percentage is hidden. The register state at this point must not be generalized to another instruction site.
+**Implementation policy:** An optional interior hook reads this value and checks the supported build, instruction bytes, and object/cycle relationship. For later recovery cycles that rely on this hook, the leg percentage is hidden if a trustworthy reference is unavailable. The initial cycle and first recovery use separate reference-value paths, described in [Tayu'itar leg recovery cycles](lock-on-and-part-state.en.md#tayuitar-leg-recovery-cycles). The register state at this point must not be generalized to another instruction site.
 
 ## Render-command references and destruction
 
@@ -84,7 +84,7 @@ Object size alone does not determine the final sprite quad: atlas trim/padding a
 
 The UI owner global `RVA 0x7C01858` and atlas-request context global `RVA 0x7C17858` are distinct; one must not be substituted for the other.
 
-**Implementation policy:** The custom atlas is requested once in a context checked against the original loader callback's context and flags and current-thread resource-mutex ownership. A non-null material alone does not establish readiness: metadata, UVs, material identity, and native readiness are checked. A resource epoch or material change invalidates readiness.
+**Implementation policy:** The custom atlas is requested once in a context checked against the original loader callback's context and flags and current-thread resource-mutex ownership. A non-null material alone does not establish readiness: metadata, UVs, material identity, and native readiness are checked. A change in the tracked resource generation (resource epoch) or material invalidates readiness.
 
 Even if the resource epoch changes, an already validated identical material is revalidated at the first safe UI frame. A replaced or not-yet-ready material stays hidden until validation succeeds. See [NativeHeadAssets](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/NativeHeadAssets.cs).
 

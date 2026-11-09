@@ -50,7 +50,7 @@
 
 1.0.0 배포 후보의 별도 로컬 검증 기록에는 Release 빌드와 회귀 테스트 21개 묶음이 남아 있다. 배포 ZIP 설치 후 앙그라 머리 록온과 메뉴 전환도 확인했다. 이 결과는 필요한 로컬 자료와 이미 설치된 의존성을 포함한 환경에서의 검증이며, 아래에 기술한 공개 저장소 단독 재현 결과와 구별한다.
 
-공개 폴더를 작업 디렉터리로 한 테스트 실행은 백분율 리소스 검증에 쓰는 `resource_validation.json`이 없어 중단됐다. 그 이후의 전체 테스트는 실행 완료로 표시하지 않는다. 전용 앙그라 아틀라스가 필요한 테스트도 공개 자료만으로 완료할 수 없다. 로컬 비공개 자료를 빌려 통과한 결과를 공개 저장소 단독 재현 결과로 표시하지 않는다.
+초기 연구 소스 `70f96f8`에서 공개 폴더를 작업 디렉터리로 실행한 테스트는 백분율 리소스 검증에 쓰는 `resource_validation.json`이 없어 중단됐다. 그 이후의 전체 테스트는 실행 완료로 표시하지 않는다. 이는 위의 1.0.0 로컬 테스트와 별도다. 전용 앙그라 아틀라스가 필요한 테스트도 공개 자료만으로 완료할 수 없다. 로컬 비공개 자료를 빌려 통과한 결과를 공개 저장소 단독 재현 결과로 표시하지 않는다.
 
 관련 구현은 [프로젝트 파일](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/PartIndicator.csproj), [테스트 진입점](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/Tests/Program.cs), [백분율 테스트](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/Tests/PercentageTextTest.cs), [전용 리소스 테스트](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/Tests/HeadAssetsTest.cs)에서 확인할 수 있다.
 

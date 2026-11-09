@@ -48,7 +48,7 @@ UI owner의 `+0x220` staging map과 `+0x1E0` live map은 모두 소유권을 보
 
 **정적 확인:** 타이유타르 공용 복구 함수에서 네 번째 다리의 현재값 쓰기 직후 명령은 RVA `0x2D35B84`에 있다. 이 지점에서 RSI는 개체를, EAX는 게임이 계산해 다리에 기록한 값을 담는다.
 
-**구현 정책:** 선택적 내부 명령 후크는 이 값을 읽고 지원 빌드·명령 바이트 및 개체·주기 관계를 검사한다. 관찰값을 신뢰할 수 없을 때 다리 백분율은 표시하지 않는다. 이 위치의 레지스터 상태를 다른 명령 위치에 일반화해서는 안 된다. [배포 구현](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/NativeServiceBridge.cs)을 참고한다.
+**구현 정책:** 선택적 내부 명령 후크는 이 값을 읽고 지원 빌드·명령 바이트 및 개체·주기 관계를 검사한다. 이 후크에 의존하는 후속 복구 주기에서 신뢰할 수 있는 기준값이 없으면 다리 백분율은 표시하지 않는다. 초기 주기와 첫 복구는 [별도 기준값 경로](lock-on-and-part-state.md#타이유타르-다리의-복구-주기)를 사용한다. 이 위치의 레지스터 상태를 다른 명령 위치에 일반화해서는 안 된다. [배포 구현](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/NativeServiceBridge.cs)을 참고한다.
 
 ## 렌더 명령 참조와 파괴
 
