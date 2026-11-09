@@ -8,7 +8,7 @@ The mod reads durability directly from the game and updates the indicator as sup
 
 ## Compatibility and installation
 
-Developed and tested on the Steam PC version of Granblue Fantasy: Relink – Endless Ragnarok, game version 2.0.6. Offline solo play and play with AI party members are supported; online play is outside the tested support scope.
+Developed and tested on the Steam PC version of Granblue Fantasy: Relink – Endless Ragnarok, game version 2.0.6. The indicator is available in offline solo play and with AI party members. It is disabled during online sessions because online behavior has not yet been fully verified. Online support may be considered in a future update.
 
 1. Install [Reloaded-II](https://github.com/Reloaded-Project/Reloaded-II) and the [Endless Ragnarok Mod Loader](https://www.nexusmods.com/granbluefantasyrelink/mods/526).
 2. Close the game, install the mod ZIP through Reloaded-II, and enable the mod and its dependencies.

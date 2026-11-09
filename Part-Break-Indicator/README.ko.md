@@ -8,7 +8,7 @@
 
 ## 호환성 및 설치
 
-Steam PC판 그랑블루 판타지: 리링크 – 엔드리스 라그나로크 2.0.6에서 개발하고 테스트했습니다. 오프라인 솔로와 AI 파티 플레이를 지원하며, 온라인 플레이는 테스트된 지원 범위 밖입니다.
+Steam PC판 그랑블루 판타지: 리링크 – 엔드리스 라그나로크 2.0.6에서 개발하고 테스트했습니다. 오프라인 솔로와 AI 파티 플레이에서 표시 기능을 사용할 수 있습니다. 온라인 동작은 아직 충분히 검증되지 않아 온라인 세션에서는 표시 기능이 비활성화됩니다. 추후 업데이트에서 온라인 지원을 검토할 수 있습니다.
 
 1. [Reloaded-II](https://github.com/Reloaded-Project/Reloaded-II)와 [Endless Ragnarok Mod Loader](https://www.nexusmods.com/granbluefantasyrelink/mods/526)를 설치합니다.
 2. 게임을 종료하고 Reloaded-II에서 모드 ZIP을 설치한 뒤 모드와 필수 의존성을 활성화합니다.
