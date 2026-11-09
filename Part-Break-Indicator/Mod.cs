@@ -16,6 +16,7 @@ public sealed class Mod : IMod
     private NativeBindings? _bindings;
     private GameHooks? _hooks;
     private NativeServiceBridge? _service;
+    private NativeServiceBridge? _tayuitarReset;
     private GCHandle _lifetimeRoot;
     private bool _started;
     public Action Disposing => Suspend;
@@ -42,7 +43,19 @@ public sealed class Mod : IMod
             _service = new(hooks, _bindings.At("service"), _hud.Service, _hud.Failed);
             // Native callbacks may run as soon as activation begins, and must survive loader disposal.
             _lifetimeRoot = GCHandle.Alloc(this);
-            _hooks.Activate(); _headAssets.Activate(); _service.Activate(); _hud.Enabled = true;
+            _hooks.Activate(); _headAssets.Activate(); _service.Activate();
+            try
+            {
+                nint reset = module.BaseAddress + 0x2d35b84;
+                // The seven-byte active-flag store follows the fourth leg's current-value write.
+                if (ProcessMemory.Read<ulong>(reset - 6) != 0x86c600006b308689UL ||
+                    ProcessMemory.Read<ulong>(reset) != 0xeb0100006b3886c6UL)
+                    throw new IOException("Native Tayuitar reset site mismatch");
+                _tayuitarReset = new(hooks, reset, _hud.RecordTayuitarLegReset, error => Log("Tayuitar reset sample skipped: " + error.Message));
+                _tayuitarReset.Activate();
+            }
+            catch (Exception error) { Log("Tayuitar later-cycle observation unavailable: " + error.Message); }
+            _hud.Enabled = true;
             Log("Execution connected; waiting for a verified HUD and supported solo lock-on target.");
         }
         catch (Exception error)

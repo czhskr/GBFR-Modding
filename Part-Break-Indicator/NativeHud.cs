@@ -60,6 +60,9 @@ public sealed unsafe class NativeHud : IIndicatorHud, IGameEvents
     public NativeHud(NativeBindings bindings, Action<string> log, NativeHeadAssets? headAssets = null)
     { _b = bindings; _log = log; _headAssets = headAssets; _reader = new(bindings.ModuleBase); _runtime = new(this); }
 
+    public void RecordTayuitarLegReset(nint actor, int maximum) =>
+        _reader.RecordTayuitarLegReset(actor, Enabled ? maximum : 0);
+
     public void Failed(Exception error)
     {
         Enabled = false;

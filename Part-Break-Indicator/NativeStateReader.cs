@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace PartIndicator;
 
 public sealed class NativeStateReader(nint moduleBase)
@@ -8,6 +10,7 @@ public sealed class NativeStateReader(nint moduleBase)
         public bool IsValid(int index, int initial) => Current is >= 0 and <= 1000000000 && Initial == initial &&
             Attachment == 0 && Kind == index && (byte)ActiveWord == (Current == 0 ? 0 : 1);
     }
+    private readonly record struct TayuitarObservedReset(nint Scene, ulong Stamp, nint Parameter, int Round, int Maximum);
 
     private (WorldIdentity World, long Generation, nint Scene, nint Actor, uint Id, ulong Stamp, uint Type,
         nint Parameter, int[] Initials, int VerifiedMask, int BrokenMask)? _proof;
@@ -18,6 +21,8 @@ public sealed class NativeStateReader(nint moduleBase)
     private readonly Dictionary<nint, (WorldIdentity World, long Generation, nint Scene, nint Actor, uint Id, ulong Stamp, uint Type,
         nint Parameter, float Initial, bool BrokenSeen)> _headProofCache = [];
     private readonly Dictionary<nint, (nint Actor, ulong Stamp, nint Parameter, byte Flags, int Initial, int Maximum)> _tayuitarResetMaxima = [];
+    // Native reset events can arrive before the HUD starts reading this stamped scene.
+    private readonly ConcurrentDictionary<nint, TayuitarObservedReset> _tayuitarObservedResets = new();
     private WorldIdentity _proofWorld;
     private long _proofGeneration;
     private static T R<T>(nint p) where T : unmanaged => ProcessMemory.Read<T>(p);
@@ -368,6 +373,7 @@ public sealed class NativeStateReader(nint moduleBase)
         int current = R<int>(currentAddress), cachedInitial = 0, kind = 0, attachment = 0, configured = 0;
         byte active = 0, marker = 0; bool verified = false;
         (int Phase, int Round, byte ResetPending) cycle = default;
+        TayuitarObservedReset? observed = null;
         if (current is < 0 or > 1000000000) return Reject();
         if (head)
         {
@@ -388,6 +394,12 @@ public sealed class NativeStateReader(nint moduleBase)
                     (proof.Actor, proof.Stamp, proof.Parameter, proof.Flags, proof.Initial) == (actor, stamp, parameter, flags, cachedInitial)
                     ? proof.Maximum : ReadTayuitarLegMaximum(actor, parameter, flags, cachedInitial, initialCycle: false);
             }
+            else if (active == 1 && cycle is (>= 0 and <= 3, > 0, 0) && _tayuitarObservedResets.TryGetValue(actor, out var reset) &&
+                (reset.Scene, reset.Stamp, reset.Parameter, reset.Round) == (scene, stamp, parameter, cycle.Round))
+            {
+                configured = reset.Maximum;
+                observed = reset;
+            }
             verified = configured > 0 && current <= configured;
         }
         if (R<int>(currentAddress) != current || R<nint>(actor + 0x1598) != parameter || R<byte>(actor + 0xe) != flags ||
@@ -402,7 +414,8 @@ public sealed class NativeStateReader(nint moduleBase)
         bool broken = head ? current == 0 && marker == 1 : active == 0;
         if (!head)
         {
-            if (ReadTayuitarCycle(actor) != cycle) verified = false;
+            if (ReadTayuitarCycle(actor) != cycle || observed is { } captured &&
+                (!_tayuitarObservedResets.TryGetValue(actor, out var latest) || latest != captured)) verified = false;
             if (cycle is (>= 0 and <= 3, 0, 0) && verified && !broken)
             {
                 if (_tayuitarResetMaxima.Count >= 64 && !_tayuitarResetMaxima.ContainsKey(scene)) _tayuitarResetMaxima.Clear();
@@ -426,6 +439,35 @@ public sealed class NativeStateReader(nint moduleBase)
 
     private static (int Phase, int Round, byte ResetPending) ReadTayuitarCycle(nint actor) =>
         (R<int>(actor + 0x9410), R<int>(actor + 0x9430), R<byte>(actor + 0x9435));
+
+    public void RecordTayuitarLegReset(nint actor, int maximum)
+    {
+        _tayuitarObservedResets.TryRemove(actor, out _);
+        if (maximum is < 1 or > 1000000000 || R<nint>(actor) != moduleBase + 0x5b77238 || IsTayuitarCarnage(actor) ||
+            R<int>(R<nint>(moduleBase + 0x7c53d10) + 4) != 0) return;
+        var cycle = ReadTayuitarCycle(actor);
+        if (cycle is not (1 or 2, > 0, 1)) return;
+        nint parameter = R<nint>(actor + 0x1598);
+        nint owner = R<nint>(R<nint>(actor + 0x648));
+        nint context = R<nint>(owner + 0x28), scene = R<nint>(context + 0x18);
+        if (parameter == 0 || scene == 0) return;
+        uint id = R<uint>(scene + 0x38);
+        ulong stamp = R<ulong>(scene + 0x48);
+        if (id is 0 or > 1048576 || stamp == 0) return;
+        nint manager = R<nint>(moduleBase + 0x7020988), slot = (nint)((id - 1) * 8);
+        if (R<nint>(R<nint>(manager + 0x20) + slot) != scene || R<ulong>(R<nint>(manager + 0x48) + slot) != stamp ||
+            R<nint>(scene + 0x40) != scene || R<nint>(scene + 0x70) != actor) return;
+
+        // All current values were written at the hook site. The final leg's active byte is set by the next instruction.
+        for (int index = 2; index <= 5; index++)
+        {
+            var leg = R<TayuitarLegRow>(actor + 0x6a68 + index * 40);
+            if (leg.Current != maximum || leg.Kind != index || leg.Attachment != 0 || index < 5 && (byte)leg.ActiveWord != 1) return;
+        }
+        if (ReadTayuitarCycle(actor) != cycle || R<nint>(actor + 0x1598) != parameter || R<ulong>(scene + 0x48) != stamp) return;
+        if (_tayuitarObservedResets.Count >= 64) _tayuitarObservedResets.Clear();
+        _tayuitarObservedResets[actor] = new(scene, stamp, parameter, cycle.Round, maximum);
+    }
 
     private static int ReadTayuitarLegMaximum(nint actor, nint parameter, byte flags, int cachedInitial, bool initialCycle)
     {
@@ -456,7 +498,7 @@ public sealed class NativeStateReader(nint moduleBase)
 
     private static int ResolveTayuitarFirstResetMaximum(nint parameter, byte flags, int largestCurrent)
     {
-        // Round zero uses 1 or the short-cycle scale. Higher rounds use native powf and need separate proof.
+        // Round zero uses 1 or the short-cycle scale. Later rounds are read at the native write.
         if (!ProcessMemory.TryRead<float>(parameter + 0xc00, out var shortScale) || !float.IsFinite(shortScale) || shortScale <= 0) return 0;
         int maximum = 0;
         int lastSource = (flags & 0x40) == 0 ? 0x988 : 0x98c;

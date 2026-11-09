@@ -19,7 +19,8 @@ static unsafe class TayuitarStateTest
                 localScene = Alloc(0x80), localActor = Alloc(8), target = Alloc(0x80), actor = Alloc(0xa100),
                 parameter = Alloc(0x1600), entries = Alloc(5 * 48), manager = Alloc(0x60),
                 scenes = Alloc(64), stamps = Alloc(64), session = Alloc(8),
-                descriptorSlot = Alloc(8), descriptor = Alloc(0x20), descriptorVtable = Alloc(0x20);
+                descriptorSlot = Alloc(8), descriptor = Alloc(0x20), descriptorVtable = Alloc(0x20),
+                resetOwner = Alloc(8), resetObject = Alloc(0x30), resetContext = Alloc(0x20);
             *(nint*)(module + 0x7362690) = vector; *(nint*)(module + 0x7362698) = vector + 8; *(nint*)vector = player;
             *(nint*)(player + 8) = a; *(nint*)a = b; *(nint*)(b + 0x28) = c; *(nint*)(c + 0x18) = localScene;
             *(nint*)(player + 0x230) = localActor; *(nint*)(localScene + 0x70) = localActor;
@@ -35,6 +36,8 @@ static unsafe class TayuitarStateTest
             *(nint*)(actor + 0x28) = descriptorSlot; *(nint*)descriptorSlot = descriptor;
             *(nint*)descriptor = descriptorVtable; *(nint*)(descriptorVtable + 0x18) = module + 0x205c2f0;
             *(int*)(descriptor + 0x14) = 0x21900;
+            *(nint*)(actor + 0x648) = resetOwner; *(nint*)resetOwner = resetObject;
+            *(nint*)(resetObject + 0x28) = resetContext; *(nint*)(resetContext + 0x18) = target;
             *(nint*)(actor + 0x1598) = parameter; *(int*)(parameter + 0xbf0) = 160;
             *(int*)(parameter + 0x8d8) = 4;
             *(nint*)(actor + 0x788) = entries; *(nint*)(actor + 0x790) = entries + 5 * 48;
@@ -83,6 +86,43 @@ static unsafe class TayuitarStateTest
             if (PercentageText.Percentage(Read("Tayu replacement first reset unavailable")) != 100) throw new Exception("Tayu replacement reset proof");
             *(int*)(actor + 0x9430) = 1;
             if (Read("Tayu later cycle unavailable").Fraction != null) throw new Exception("Tayu later cycle reused first reset maximum");
+            void RestoreLegs(int maximum, NativeStateReader? observer = null)
+            {
+                *(byte*)(actor + 0x9435) = 1;
+                for (int index = 2; index <= 5; index++)
+                { nint leg = actor + 0x6a68 + index * 40; *(int*)leg = maximum; *(byte*)(leg + 8) = (byte)(index == 5 ? 0 : 1); }
+                (observer ?? reader).RecordTayuitarLegReset(actor, maximum);
+                *(int*)(player + 0x118) = 787;
+                if (Read("Tayu pending reset unavailable").Fraction != null) throw new Exception("Tayu displayed a pending reset");
+                *(byte*)(actor + 0x6b38) = 1; *(byte*)(actor + 0x9435) = 0;
+            }
+            *(int*)(actor + 0x9410) = 2;
+            RestoreLegs(150);
+            if (PercentageText.Percentage(Read("Tayu second reset unavailable")) != 100) throw new Exception("Tayu second reset ignored observed maximum");
+            for (int index = 2; index <= 5; index++) *(int*)(actor + 0x6a68 + index * 40) = 75;
+            *(int*)(player + 0x118) = 1552;
+            if (PercentageText.Percentage(Read("Tayu second reset relock unavailable")) != 50) throw new Exception("Tayu second reset damage or relock");
+            *(int*)(actor + 0x9430) = 2;
+            if (Read("Tayu next round unavailable").Fraction != null) throw new Exception("Tayu reused second reset maximum across rounds");
+            RestoreLegs(225);
+            *(int*)(actor + 0x6ab8) = 180;
+            if (PercentageText.Percentage(Read("Tayu subsequent reset unavailable")) != 80) throw new Exception("Tayu later reset used the wrong maximum");
+            *(byte*)(actor + 0x9435) = 1;
+            reader.RecordTayuitarLegReset(actor, 225);
+            *(byte*)(actor + 0x9435) = 0;
+            if (Read("Tayu invalid capture unavailable").Fraction != null) throw new Exception("Tayu retained the old proof after a mismatched capture");
+            RestoreLegs(225);
+            *(ulong*)(target + 0x48) = *(ulong*)(stamps + 24) = 202;
+            if (Read("Tayu subsequent stamp unavailable").Fraction != null) throw new Exception("Tayu reused an observed maximum across actor stamps");
+            var firstLockReader = new NativeStateReader(module);
+            RestoreLegs(225, firstLockReader);
+            foreach (long generation in new[] { 1L, 2L })
+                if (!firstLockReader.TryReadSnapshot(world, generation, out var restored) ||
+                    PercentageText.Percentage(PartStatePolicy.Evaluate(restored)) != 100)
+                    throw new Exception("Tayu lost stamped proof before HUD lock or after HUD generation change");
+            firstLockReader.RecordTayuitarLegReset(actor, 0);
+            if (!firstLockReader.TryReadSnapshot(world, 2, out var skipped) || PartStatePolicy.Evaluate(skipped).Fraction != null)
+                throw new Exception("Tayu kept the old proof after a reset while disabled");
             *(int*)(parameter + 0x8d8) = 1;
             *(int*)(actor + 0x6a68 + 2 * 40) = 0; *(byte*)(actor + 0x6a68 + 2 * 40 + 8) = 0;
             *(int*)(actor + 0x6a68 + 5 * 40) = 100;
@@ -146,7 +186,7 @@ static unsafe class TayuitarStateTest
             *(nint*)(actor + 0x790) = entries + 49; Reject("Tayu misaligned lock vector accepted"); *(nint*)(actor + 0x790) = entries + 5 * 48;
             foreach (int id in new[] { -1, 0, 1792, 265 }) { *(int*)(player + 0x118) = id; Reject("Tayu metadata/equipment/unmapped selection accepted"); }
             *(int*)(player + 0x118) = 7; *(nint*)actor = module + 0x5b77240; Reject("unknown Tayu class accepted");
-            Console.WriteLine("PASS: Tayu leg cycles, Carnage-only leg exclusion, head percentages, and stale actor rejection");
+            Console.WriteLine("PASS: Tayu initial and observed later-cycle maxima, proof invalidation, Carnage leg exclusion and head percentages");
         }
         finally { foreach (nint p in allocations) NativeMemory.Free((void*)p); VirtualFree(module, 0, 0x8000); }
     }
