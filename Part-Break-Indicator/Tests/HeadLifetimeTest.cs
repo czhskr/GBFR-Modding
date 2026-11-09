@@ -182,6 +182,14 @@ static unsafe class HeadLifetimeTest
             Check(f.Ready(59, 0) == 0, "replacement must hide until it is validated");
             Check(f.Ready(60, 0) == f.MaterialB && f.StatusCalls == 2, "readable replacement with identical metadata gets its own readiness proof");
         });
+        Case("menu resource epoch revalidates a ready head atlas", f => {
+            Check(f.Ready(0, 0) == f.MaterialA, "initial material identity");
+            Check(f.Ready(1, 1) == f.MaterialA && f.StatusCalls == 2, "same material must revalidate before hiding for the retry interval");
+            Check(f.Ready(2, 1) == f.MaterialA && f.StatusCalls == 2, "unchanged resource epoch should reuse the proof");
+            f.StatusReady = false;
+            Check(f.Ready(3, 2) == 0 && f.StatusCalls == 3, "native not-ready result must hide the head");
+            Check(f.Ready(4, 3) == 0 && f.StatusCalls == 3, "pending resources should keep the retry interval");
+        });
         Case("late readiness", f => {
             f.StatusReady = false;
             for (int frame = 0; frame < 60; frame++) Check(f.Ready(frame, frame) == 0, "pending material hidden across resource epochs");

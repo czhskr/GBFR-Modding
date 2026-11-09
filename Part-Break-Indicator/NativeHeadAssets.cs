@@ -76,8 +76,10 @@ public sealed class NativeHeadAssets
     {
         if (Volatile.Read(ref _requested) != 2 || !HudAtlas.TryMaterial(_b.ModuleBase, Atlas, out var current))
         { _readyMaterial = 0; return 0; }
+        // Recheck a proven material on the first safe frame after resource work.
+        bool recheckAfterResourceWork = _readyMaterial == current && epoch != _checkEpoch;
         if (current != _checkedMaterial || epoch != _checkEpoch) _readyMaterial = 0;
-        if (frame >= _nextCheck)
+        if (recheckAfterResourceWork || frame >= _nextCheck)
         {
             _nextCheck = frame + 60; _checkEpoch = epoch; _checkedMaterial = current; _readyMaterial = 0;
             if (HudAtlas.TryValidate(_b.ModuleBase, Atlas, [Glyph], out var verified, 1254) && verified == current &&
