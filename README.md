@@ -14,13 +14,12 @@ Enables the game's usual Skip input for unread Fate Episodes.
 [Nexus Mods](https://www.nexusmods.com/granbluefantasyrelink/mods/890) ·
 [GitHub Releases](https://github.com/czhskr/GBFR-Modding/releases)
 
-## In Development
-
 ### Part Break Indicator
 
 Displays status and verified remaining durability for supported lock-on parts.
-This project is in development and is not a public release.
 
+[Details](Part-Break-Indicator/README.md) ·
+[Nexus Mods](https://www.nexusmods.com/granbluefantasyrelink/mods/893) ·
 [Source](Part-Break-Indicator/)
 
 The source archive excludes development assets and test data. Reloaded-II

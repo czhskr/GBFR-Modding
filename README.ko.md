@@ -14,13 +14,12 @@
 [Nexus Mods](https://www.nexusmods.com/granbluefantasyrelink/mods/890) ·
 [GitHub Releases](https://github.com/czhskr/GBFR-Modding/releases)
 
-## 개발 중
-
 ### Part Break Indicator
 
 지원하는 록온 부위의 파괴 상태와 검증된 남은 내구도를 표시합니다.
-개발 중이며 아직 공개 릴리즈는 아닙니다.
 
+[자세히 보기](Part-Break-Indicator/README.ko.md) ·
+[Nexus Mods](https://www.nexusmods.com/granbluefantasyrelink/mods/893) ·
 [소스](Part-Break-Indicator/)
 
 소스 보관 범위에는 개발 리소스와 테스트 자료가 포함되지 않습니다. 빌드 및
