@@ -361,6 +361,7 @@ public sealed class NativeStateReader(nint moduleBase)
         for (int i = 0; i < ids.Length; i++)
         { ids[i] = R<int>(locks + i * 48); if (ids[i] == selected) { if (chosen != -1) return Reject(); chosen = i; } }
         if (chosen < 0 || R<byte>(locks + chosen * 48 + 0x29) != 1) return false;
+        if (!head && IsTayuitarCarnage(actor)) return false;
         nint parameter = R<nint>(actor + 0x1598); byte flags = R<byte>(actor + 0xe);
         if (parameter == 0) return Reject();
         nint row = head ? 0 : actor + 0x6a68 + index * 40, currentAddress = head ? actor + 0x9420 : row;
@@ -411,6 +412,16 @@ public sealed class NativeStateReader(nint moduleBase)
         }
         snapshot = new(scene, actor, 0x1900, selected, true, current, verified ? configured : null, [], verified, generation, broken);
         return PartStatePolicy.Evaluate(snapshot).Visible;
+    }
+
+    private bool IsTayuitarCarnage(nint actor)
+    {
+        // The shared leg reset routine reads this descriptor ID through a native field getter.
+        return ProcessMemory.TryRead<nint>(actor + 0x28, out var slot) &&
+            ProcessMemory.TryRead<nint>(slot, out var descriptor) &&
+            ProcessMemory.TryRead<nint>(descriptor, out var vtable) &&
+            ProcessMemory.TryRead<nint>(vtable + 0x18, out var getter) && getter == moduleBase + 0x205c2f0 &&
+            ProcessMemory.TryRead<uint>(descriptor + 0x14, out var nativeId) && nativeId == 0x21910;
     }
 
     private static (int Phase, int Round, byte ResetPending) ReadTayuitarCycle(nint actor) =>

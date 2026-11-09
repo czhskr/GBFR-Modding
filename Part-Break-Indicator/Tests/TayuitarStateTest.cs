@@ -18,7 +18,8 @@ static unsafe class TayuitarStateTest
             nint vector = Alloc(8), player = Alloc(0x240), a = Alloc(8), b = Alloc(0x30), c = Alloc(0x20),
                 localScene = Alloc(0x80), localActor = Alloc(8), target = Alloc(0x80), actor = Alloc(0xa100),
                 parameter = Alloc(0x1600), entries = Alloc(5 * 48), manager = Alloc(0x60),
-                scenes = Alloc(64), stamps = Alloc(64), session = Alloc(8);
+                scenes = Alloc(64), stamps = Alloc(64), session = Alloc(8),
+                descriptorSlot = Alloc(8), descriptor = Alloc(0x20), descriptorVtable = Alloc(0x20);
             *(nint*)(module + 0x7362690) = vector; *(nint*)(module + 0x7362698) = vector + 8; *(nint*)vector = player;
             *(nint*)(player + 8) = a; *(nint*)a = b; *(nint*)(b + 0x28) = c; *(nint*)(c + 0x18) = localScene;
             *(nint*)(player + 0x230) = localActor; *(nint*)(localScene + 0x70) = localActor;
@@ -31,6 +32,9 @@ static unsafe class TayuitarStateTest
             *(uint*)(target + 0x38) = 4; *(nint*)(target + 0x40) = target; *(ulong*)(target + 0x48) = 200;
             *(nint*)(scenes + 24) = target; *(ulong*)(stamps + 24) = 200;
             *(nint*)actor = module + 0x5b77238; *(uint*)(actor + 0x160) = 26427997;
+            *(nint*)(actor + 0x28) = descriptorSlot; *(nint*)descriptorSlot = descriptor;
+            *(nint*)descriptor = descriptorVtable; *(nint*)(descriptorVtable + 0x18) = module + 0x205c2f0;
+            *(int*)(descriptor + 0x14) = 0x21900;
             *(nint*)(actor + 0x1598) = parameter; *(int*)(parameter + 0xbf0) = 160;
             *(int*)(parameter + 0x8d8) = 4;
             *(nint*)(actor + 0x788) = entries; *(nint*)(actor + 0x790) = entries + 5 * 48;
@@ -110,13 +114,24 @@ static unsafe class TayuitarStateTest
             foreach (var (selected, index) in new[] { (787, 2), (1043, 3), (1296, 4), (1552, 5) })
             {
                 *(int*)(player + 0x118) = selected; nint row = actor + 0x6a68 + index * 40;
-                if (PercentageText.Percentage(Read("Carnage leg unavailable")) != 100) throw new Exception("Carnage phase 3 initial cycle needs native 1000 maximum");
+                if (PercentageText.Percentage(Read("Shared-class alternate leg unavailable")) != 100) throw new Exception("Alternate flags or phase alone hid a normal identity");
                 *(int*)row = 750;
-                if (PercentageText.Percentage(Read("Carnage damaged leg unavailable")) != 75) throw new Exception("Carnage initial cycle damage");
+                if (PercentageText.Percentage(Read("Shared-class alternate damaged leg unavailable")) != 75) throw new Exception("Alternate initial cycle damage");
             }
             *(int*)(actor + 0x6a68 + 2 * 40) = 0; *(byte*)(actor + 0x6a68 + 2 * 40 + 8) = 0;
-            if (PercentageText.Percentage(Read("Carnage surviving leg unavailable")) != 75) throw new Exception("Carnage lost initial maximum before break threshold");
-            *(int*)(player + 0x118) = 7; *(int*)(actor + 0x9420) = 0;
+            if (PercentageText.Percentage(Read("Shared-class alternate surviving leg unavailable")) != 75) throw new Exception("Alternate lost initial maximum before break threshold");
+            *(int*)(descriptor + 0x14) = 0x21910;
+            foreach (int selected in new[] { 787, 1043, 1296, 1552 })
+            {
+                *(int*)(player + 0x118) = selected;
+                Reject("Carnage native identity still showed a leg icon or percentage");
+            }
+            *(byte*)(actor + 0xe) = 0;
+            Reject("Carnage native identity exclusion depended on a difficulty flag");
+            *(byte*)(actor + 0xe) = 0x40;
+            *(int*)(player + 0x118) = 7;
+            if (PercentageText.Percentage(Read("Carnage identity head unavailable")) != 50) throw new Exception("Carnage leg exclusion affected the head");
+            *(int*)(actor + 0x9420) = 0;
             if (Read("Carnage unprocessed zero unavailable").Broken) throw new Exception("Carnage zero bypassed processed marker");
             *(byte*)(actor + 0x9996) = 1;
             if (Read("Carnage processed head unavailable") is not { Broken: true, Fraction: null }) throw new Exception("Carnage processed head retained percentage");
@@ -131,7 +146,7 @@ static unsafe class TayuitarStateTest
             *(nint*)(actor + 0x790) = entries + 49; Reject("Tayu misaligned lock vector accepted"); *(nint*)(actor + 0x790) = entries + 5 * 48;
             foreach (int id in new[] { -1, 0, 1792, 265 }) { *(int*)(player + 0x118) = id; Reject("Tayu metadata/equipment/unmapped selection accepted"); }
             *(int*)(player + 0x118) = 7; *(nint*)actor = module + 0x5b77240; Reject("unknown Tayu class accepted");
-            Console.WriteLine("PASS: Tayu/Carnage head and leg percentages, first reset proof, fallback for unknown cycles, and stale actor rejection");
+            Console.WriteLine("PASS: Tayu leg cycles, Carnage-only leg exclusion, head percentages, and stale actor rejection");
         }
         finally { foreach (nint p in allocations) NativeMemory.Free((void*)p); VirtualFree(module, 0, 0x8000); }
     }
