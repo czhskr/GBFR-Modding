@@ -20,6 +20,8 @@ Download the mod and see the supported boss list on [Nexus Mods](https://www.nex
 
 ## Source
 
+The current source contains a post-1.0.0 startup safety change that has passed isolated tests but has not yet been verified in-game. The published 1.0.0 release does not include it.
+
 This repository preserves the source and tests but excludes development assets and test data. Reloaded-II dependencies and additional local files are required to build and run all tests; the repository alone cannot reproduce the complete mod package.
 
 ## Development and AI disclosure

@@ -18,7 +18,7 @@ public sealed class Mod : IMod
     private NativeServiceBridge? _service;
     private NativeServiceBridge? _tayuitarReset;
     private GCHandle _lifetimeRoot;
-    private bool _started;
+    private bool _started, _initialized;
     public Action Disposing => Suspend;
     public void Start(IModLoaderV1 loader) => StartEx(loader, null!);
     public void StartEx(IModLoaderV1 loader, IModConfigV1 config)
@@ -55,11 +55,13 @@ public sealed class Mod : IMod
                 _tayuitarReset.Activate();
             }
             catch (Exception error) { Log("Tayuitar later-cycle observation unavailable: " + error.Message); }
+            _initialized = true;
             _hud.Enabled = true;
             Log("Execution connected; waiting for a verified HUD and supported solo lock-on target.");
         }
         catch (Exception error)
         {
+            _initialized = false;
             if (_hud != null) _hud.Enabled = false;
             Log("Startup disabled: " + error.Message);
         }
@@ -67,7 +69,7 @@ public sealed class Mod : IMod
     private void Log(string message)
     { try { _logger?.PrintMessage("[Part Indicator] " + message, Color.LightGreen); } catch { } }
     public void Suspend() { if (_hud != null) _hud.Enabled = false; Log("Suspended; UI retirement queued."); }
-    public void Resume() { if (_hud != null) _hud.Enabled = true; Log("Resume requested; fresh scene generation required."); }
+    public void Resume() { if (!_initialized || _hud == null) { Log("Resume ignored; startup did not complete."); return; } _hud.Enabled = true; Log("Resume requested; fresh scene generation required."); }
     public void Unload() => Suspend();
     public bool CanSuspend() => true;
     // Live reverse-P/Invoke delegates and trampolines remain rooted until process exit.

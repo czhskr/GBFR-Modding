@@ -1,6 +1,7 @@
 using PartIndicator;
 using System.Runtime.InteropServices;
 
+StartupLifecycleTest.Run();
 PercentageTextTest.Run();
 HudAtlasTest.Run();
 HeadAssetsTest.Run();
