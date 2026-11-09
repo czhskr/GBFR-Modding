@@ -1,5 +1,7 @@
 # Granblue Fantasy: Relink 네이티브 구조 연구 노트
 
+[English](README.en.md)
+
 이 문서는 록온 대상 식별, 보스 부위 상태, 기존 UI를 이용한 표시의 수명 관리를 설명한다. 특정 실행 파일에서 정적 해석과 제한된 실행 관찰로 확인한 범위를 다루며, 모든 적·퀘스트·형태에 적용되는 엔진 API 명세는 아니다.
 
 - [록온과 부위 상태](lock-on-and-part-state.md)

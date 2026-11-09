@@ -1,5 +1,7 @@
 # 네이티브 UI: 소유권, 작업 문맥과 정리 순서
 
+[English](native-ui-lifecycle.en.md)
+
 대상 빌드와 근거 분류는 [연구 개요](README.md)를 따른다. 이 노트는 기존 UI 엔진의 effect 없는 Image 경로와 이를 사용하는 모드 구현을 설명한다. 모든 UI component나 렌더링 경로를 다루는 일반 생성 API는 아니다.
 
 ## Object, component와 관리자 소유권
