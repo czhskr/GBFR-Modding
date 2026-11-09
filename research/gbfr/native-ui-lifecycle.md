@@ -42,7 +42,11 @@ UI owner의 `+0x220` staging map과 `+0x1E0` live map은 모두 소유권을 보
 
 생성·등록·삭제를 위해 호출하는 별도 native 경로에는 Object `0x26181C0`, Canvas `0xBDF3A0`, Image `0x3340DC0`, attach `0x2618DA0`, Image 초기 bind `0x3345D60`, owning map insert `0x2520180`, 삭제 요청 `0x261CD70`이 있다. 이 주소 목록만으로 올바른 인수·소유권·실행 문맥이 갖춰지는 것은 아니다.
 
-전용 아틀라스 요청 entry hook은 `0x25374A0`이며 준비 상태 확인 호출은 `0x2539460`이다. 사용 지점의 정확한 바이트 접두부와 delegate는 [NativeBindings](https://github.com/czhskr/GBFR-Modding/blob/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator/NativeBindings.cs)에, 실제 hook 집합은 [GameHooks](https://github.com/czhskr/GBFR-Modding/blob/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator/GameHooks.cs)에 있다. [NativeServiceBridge](https://github.com/czhskr/GBFR-Modding/blob/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator/NativeServiceBridge.cs)는 중간 명령 bridge의 제한을 보여준다.
+전용 아틀라스 요청 entry hook은 `0x25374A0`이며 준비 상태 확인 호출은 `0x2539460`이다. 사용 지점의 정확한 바이트 접두부와 delegate는 [NativeBindings](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/NativeBindings.cs)에, 실제 hook 집합은 [GameHooks](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/GameHooks.cs)에 있다. [NativeServiceBridge](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/NativeServiceBridge.cs)는 중간 명령 bridge의 제한을 보여준다.
+
+**정적 확인:** 타이유타르 공용 복구 함수에서 네 번째 다리의 현재값 쓰기 직후 명령은 RVA `0x2D35B84`에 있다. 이 지점에서 RSI는 개체를, EAX는 게임이 계산해 다리에 기록한 값을 담는다.
+
+**구현 정책:** 선택적 내부 명령 후크는 이 값을 읽고 지원 빌드·명령 바이트 및 개체·주기 관계를 검사한다. 관찰값을 신뢰할 수 없을 때 다리 백분율은 표시하지 않는다. 이 위치의 레지스터 상태를 다른 명령 위치에 일반화해서는 안 된다. [배포 구현](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/NativeServiceBridge.cs)을 참고한다.
 
 ## 렌더 명령 참조와 파괴
 
@@ -59,7 +63,7 @@ UI owner의 `+0x220` staging map과 `+0x1E0` live map은 모두 소유권을 보
 
 전체 관리자 개수가 이전 값과 같다는 사실보다 자신의 key와 component가 소멸했다는 사실이 중요하다. 그사이에 다른 게임 UI가 만들어질 수 있기 때문이다. 위 절차에서 관찰한 마지막 소비는 CPU command consumer의 반환이다. 이를 GPU completion fence의 검증이라고 부르지 않는다.
 
-구현상 상태 전이는 [IndicatorRuntime](https://github.com/czhskr/GBFR-Modding/blob/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator/IndicatorRuntime.cs)과 [NativeHud](https://github.com/czhskr/GBFR-Modding/blob/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator/NativeHud.cs)의 `BeginRelease`, `PollRelease`, `Enter/Leave`에서 확인할 수 있다. 숨김·retirement·파괴 완료는 서로 다른 상태다.
+구현상 상태 전이는 [IndicatorRuntime](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/IndicatorRuntime.cs)과 [NativeHud](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/NativeHud.cs)의 `BeginRelease`, `PollRelease`, `Enter/Leave`에서 확인할 수 있다. 숨김·retirement·파괴 완료는 서로 다른 상태다.
 
 ## 록온 링 좌표와 화면 변환
 
@@ -74,7 +78,7 @@ y = pixelY / sy + height / 2
 
 **실행 관찰:** native quad와 화면 좌표의 관계를 비교한 제한된 표본 및 실제 표시의 록온 추적·해제·재연결·장면 전환 검증이 있다. 초기 native 시제품의 정점 오차·프레임 표본 수를 다른 C# 실행의 계측 결과로 옮겨 쓰지 않는다. 이 관찰은 GPU 표시 지연을 측정한 것도 아니다.
 
-Object의 크기만으로 최종 sprite quad 크기가 정해지지는 않는다. 아틀라스의 trim/padding과 UV 변환도 영향을 준다. 현재 구현은 자신이 소유한 Image의 padding만 정규화하고 원본 게임 Image의 필드를 수정하지 않는다. [HudCoordinates](https://github.com/czhskr/GBFR-Modding/blob/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator/HudCoordinates.cs)에서 변환식을 확인할 수 있다.
+Object의 크기만으로 최종 sprite quad 크기가 정해지지는 않는다. 아틀라스의 trim/padding과 UV 변환도 영향을 준다. 현재 구현은 자신이 소유한 Image의 padding만 정규화하고 원본 게임 Image의 필드를 수정하지 않는다. [HudCoordinates](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/HudCoordinates.cs)에서 변환식을 확인할 수 있다.
 
 ## 리소스 요청 문맥과 준비 상태
 
@@ -82,7 +86,11 @@ UI owner 전역 `RVA 0x7C01858`과 아틀라스 요청 context 전역 `RVA 0x7C1
 
 **구현 정책:** 전용 아틀라스는 원래 로더 콜백의 context·flags 및 현재 스레드의 리소스 mutex 소유를 검사한 문맥에서 한 번 요청한다. nonnull material 하나만으로 준비 완료로 판정하지 않고 metadata·UV·material 식별·native readiness를 대조한다. resource epoch나 material이 바뀌면 준비 상태를 무효화한다.
 
-아틀라스 요청과 hook/delegate의 수명은 프로세스 종료까지 유지한다. 이 모듈의 suspend는 UI 정리를 요청하는 동작이며, 모듈의 완전한 unload와 같지 않다. 전용 아틀라스의 hot unregister를 구현한 것으로 해석하지 않는다. 관련 검사는 [NativeHeadAssets](https://github.com/czhskr/GBFR-Modding/blob/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator/NativeHeadAssets.cs)에 있다.
+**구현 정책:** 리소스 세대가 바뀌어도 이전에 검증한 동일 material은 첫 안전한 UI 프레임에서 즉시 재검증한다. material이 교체됐거나 준비가 완료되지 않은 경우에는 검증될 때까지 표시를 숨긴다. [배포 구현](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/NativeHeadAssets.cs)을 참고한다.
+
+**실행 관찰과 한계:** 배포 ZIP 설치 후 앙그라 머리에 록온한 상태에서 메뉴를 열고 닫는 시험에서는 표시 깜빡임이 관찰되지 않았다. 이는 해당 메뉴 전환 시나리오에 한정된 관찰이다.
+
+아틀라스 요청과 hook/delegate의 수명은 프로세스 종료까지 유지한다. 이 모듈의 suspend는 UI 정리를 요청하는 동작이며, 모듈의 완전한 unload와 같지 않다. 전용 아틀라스의 hot unregister를 구현한 것으로 해석하지 않는다. 관련 검사는 [NativeHeadAssets](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/NativeHeadAssets.cs)에 있다.
 
 ## 미검증 및 업데이트 후 재확인
 

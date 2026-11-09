@@ -14,7 +14,8 @@
 - 디스크 파일 크기: 123,520,480바이트. 관찰 대상 모듈의 이미지 크기: 136,413,184바이트.
 - PE 리소스의 `FileVersion` 및 `ProductVersion`: 모두 `2.0.6`. 이는 실행 파일 메타데이터의 문자열이다. 타이틀 화면의 표시 버전이나 Steam Build ID와 동일하다고 확인한 값은 아니다.
 - 정적 해석: Ghidra의 기존 분석 Program과 제한된 함수·명령·RTTI 조회. 실행 관찰: Frida를 이용한 메모리 읽기 및 범위가 제한된 함수 관찰. 모든 과거 표본에 분석 도구의 정확한 버전이 결속돼 있지는 않다.
-- 공개 구현: 소스 커밋 [`70f96f8`](https://github.com/czhskr/GBFR-Modding/tree/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator). C#의 역할 이름은 분석 과정에서 붙인 이름이며 원본 게임의 디버그 심볼이라고 간주하지 않는다. 문서에서 RTTI 이름이라고 명시한 이름과 구별한다.
+- 초기 연구의 구현 기준은 [`70f96f8`](https://github.com/czhskr/GBFR-Modding/tree/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator), 1.0.0 배포 구현은 [`ef42ea2`](https://github.com/czhskr/GBFR-Modding/tree/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator)다. 별도로 지정하지 않은 소스 링크는 배포 구현을 가리킨다. C#의 역할 이름은 분석 과정에서 붙인 이름이며 원본 게임의 디버그 심볼이라고 간주하지 않는다.
+- 배포 DLL: `PartIndicator.dll`의 SHA-256은 `edb33d5b9975efd163c75c322d09caecff69926bd8cd066f5f2911b3d89e6bc3`. DLL의 버전 정보에 위 배포 소스 커밋이 기록돼 있으며 배포 ZIP, 로컬 Release DLL 및 검증에 사용한 DLL의 해시가 일치했다.
 - 소스 빌드 확인 환경: .NET SDK `10.0.400`, 대상 프레임워크 `net9.0`, x64, 로컬 Reloaded-II/Reloaded.Hooks 어셈블리. 이 빌드 환경의 정보가 과거 모든 네이티브 관찰의 환경을 완전히 재현한다는 뜻은 아니다.
 
 게임 설치 및 다른 모드의 조합 전체를 통제한 호환성 실험은 아니다. 표본에서 입증한 읽기·피해·파괴·복구·UI 전환의 범위를 각각 구별해야 한다.
@@ -37,17 +38,19 @@
 
 읽기 전후의 식별자 재검사는 재사용된 주소나 관찰 중 교체된 대상을 거부하기 위한 구현상의 방어다. 메모리 읽기가 성공했다는 사실만으로 객체 타입·소유권·동기화가 입증되는 것은 아니다. 실행 관찰과 별도로 만든 자기 프로세스 내 메모리/후크 테스트도 게임에서의 관찰과 구별한다.
 
-공개 C# 소스에는 실행 관찰이 아직 끝나지 않은 사족 후라칸 머리 경로가 포함되어 있다. 해당 경로의 정적 연결과 선택 표본을 실제 피해·파괴·재생·화면 표시 검증으로 확장해 해석하면 안 된다.
+사족 후라칸 머리는 이후 개발용 임시 록온으로 일반형과 니힐라의 피해 및 파괴 전환을 확인했다. 니힐라는 임시 해제 제거 뒤 자연 복구도 관찰했다. 자연 상태의 재선택과 복구 후 HUD는 별도 미검증이다. 자세한 범위는 [록온과 부위 상태](lock-on-and-part-state.md)를 따른다.
 
 ## 공개 소스의 재현 범위
 
 소스에는 C#·프로젝트 파일·테스트 소스·모드 설정이 포함되지만 게임 추출 원본, 전용 UI 리소스, 일부 검증 자료, 원시 캡처는 포함하지 않는다. 따라서 소스 저장소만으로 완전한 배포 패키지나 전체 테스트를 재현할 수 없다.
 
-해당 환경에서는 로컬에 설치된 Reloaded-II 어셈블리를 참조하여 공개 소스의 테스트 프로젝트까지 컴파일했다. 오류는 0건이었으며, NuGet 취약성 데이터 서버에 접근하지 못해 `NU1900` 경고 4건이 발생했다. 이는 해당 데이터 조회가 완료되지 않았다는 의미다.
+초기 연구 기준의 공개 소스는 로컬 Reloaded-II 어셈블리를 참조하여 테스트 프로젝트까지 컴파일했다. 오류는 0건이었으며, NuGet 취약성 데이터 서버에 접근하지 못해 `NU1900` 경고 4건이 발생했다. 이는 해당 데이터 조회가 완료되지 않았다는 의미다.
+
+1.0.0 배포 후보의 별도 로컬 검증 기록에는 Release 빌드와 회귀 테스트 21개 묶음이 남아 있다. 배포 ZIP 설치 후 앙그라 머리 록온과 메뉴 전환도 확인했다. 이 결과는 필요한 로컬 자료와 이미 설치된 의존성을 포함한 환경에서의 검증이며, 아래에 기술한 공개 저장소 단독 재현 결과와 구별한다.
 
 공개 폴더를 작업 디렉터리로 한 테스트 실행은 백분율 리소스 검증에 쓰는 `resource_validation.json`이 없어 중단됐다. 그 이후의 전체 테스트는 실행 완료로 표시하지 않는다. 전용 앙그라 아틀라스가 필요한 테스트도 공개 자료만으로 완료할 수 없다. 로컬 비공개 자료를 빌려 통과한 결과를 공개 저장소 단독 재현 결과로 표시하지 않는다.
 
-관련 구현은 [프로젝트 파일](https://github.com/czhskr/GBFR-Modding/blob/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator/PartIndicator.csproj), [테스트 진입점](https://github.com/czhskr/GBFR-Modding/blob/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator/Tests/Program.cs), [백분율 테스트](https://github.com/czhskr/GBFR-Modding/blob/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator/Tests/PercentageTextTest.cs), [전용 리소스 테스트](https://github.com/czhskr/GBFR-Modding/blob/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator/Tests/HeadAssetsTest.cs)에서 확인할 수 있다.
+관련 구현은 [프로젝트 파일](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/PartIndicator.csproj), [테스트 진입점](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/Tests/Program.cs), [백분율 테스트](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/Tests/PercentageTextTest.cs), [전용 리소스 테스트](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/Tests/HeadAssetsTest.cs)에서 확인할 수 있다.
 
 ## 업데이트 이후의 재확인
 
@@ -57,4 +60,4 @@
 4. UI 작업 시점, 잠금 순서, 리소스 교체, 마지막 렌더 참조의 종료와 파괴 경로를 다시 확인한다.
 5. 대표적인 자연 피해·파괴·재생·록온 전환·장면 전환을 확인한 뒤 지원 범위를 명시한다. 실패한 검증을 우회하기 위해 빌드 가드만 제거하지 않는다.
 
-공개 구현의 [BuildGuard](https://github.com/czhskr/GBFR-Modding/blob/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator/BuildGuard.cs)와 [NativeBindings](https://github.com/czhskr/GBFR-Modding/blob/70f96f8611cf9762bc9a6d7c42a590336ed3d478/Part-Break-Indicator/NativeBindings.cs)는 이 빌드 식별 및 함수 접두부 검사를 구현한다. 이 검사는 다른 빌드의 안전성을 보증하는 서명 탐색기가 아니다.
+공개 구현의 [BuildGuard](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/BuildGuard.cs)와 [NativeBindings](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/NativeBindings.cs)는 이 빌드 식별 및 함수 접두부 검사를 구현한다. 이 검사는 다른 빌드의 안전성을 보증하는 서명 탐색기가 아니다.
