@@ -42,7 +42,7 @@ public static class PartStatePolicy
                  s.CurrentBroken is bool protoBroken) broken = protoBroken;
         else return default;
         bool percentageClass = crocodileIndex >= 0 || pyetIndex >= 0 || (s.ClassId >= 0x1800 && s.ClassId <= 0x1806) ||
-            s.ClassId == 0x1900 && s.SelectedId == 7 || s.ClassId == 0x7001 && s.SelectedId == 2048 ||
+            s.ClassId == 0x1900 || s.ClassId == 0x7001 && s.SelectedId == 2048 ||
             s.ClassId is 0x1700 or 0x7200 or 0x7210 or 0x7201 or 0x7211 or 0x7100 or 0x7101 or 0x7500;
         double? fraction = !broken && percentageClass && s.InitialVerified && s.Initial is double initial &&
             double.IsFinite(initial) && initial > 0 && s.Current <= initial ? s.Current / initial : null;

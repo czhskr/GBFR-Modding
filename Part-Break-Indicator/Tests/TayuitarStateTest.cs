@@ -32,6 +32,7 @@ static unsafe class TayuitarStateTest
             *(nint*)(scenes + 24) = target; *(ulong*)(stamps + 24) = 200;
             *(nint*)actor = module + 0x5b77238; *(uint*)(actor + 0x160) = 26427997;
             *(nint*)(actor + 0x1598) = parameter; *(int*)(parameter + 0xbf0) = 160;
+            *(int*)(parameter + 0x8d8) = 4;
             *(nint*)(actor + 0x788) = entries; *(nint*)(actor + 0x790) = entries + 5 * 48;
             int[] ids = [1296, 7, 1552, 787, 1043]; // Deliberately different from native record order.
             for (int i = 0; i < ids.Length; i++) { *(int*)(entries + i * 48) = ids[i]; *(byte*)(entries + i * 48 + 0x29) = 1; }
@@ -42,10 +43,14 @@ static unsafe class TayuitarStateTest
             PartDisplay Read(string message)
             { if (!reader.TryReadSnapshot(world, 1, out var snapshot) || snapshot is null) throw new Exception(message); return PartStatePolicy.Evaluate(snapshot); }
             void Reject(string message) { if (reader.TryReadSnapshot(world, 1, out _)) throw new Exception(message); }
+            *(byte*)(actor + 0x9435) = 1;
             foreach (var (selected, index) in new[] { (787, 2), (1043, 3), (1296, 4), (1552, 5) })
             {
                 *(int*)(player + 0x118) = selected; nint row = actor + 0x6a68 + index * 40;
-                if (Read("Tayu root leg unavailable") is not { Visible: true, Broken: false, Fraction: null }) throw new Exception("Tayu initial icon-only");
+                if (PercentageText.Percentage(Read("Tayu root leg unavailable")) != 100) throw new Exception("Tayu initial cycle needs native 140 maximum");
+                *(int*)row = 70;
+                if (PercentageText.Percentage(Read("Tayu initial leg damaged")) != 50) throw new Exception("Tayu initial cycle damage");
+                *(int*)(actor + 0x9410) = 1; *(byte*)(actor + 0x9435) = 0;
                 foreach (int hp in new[] { 200, 40, 1 })
                 { *(int*)row = hp; var value = Read("Tayu phased leg unavailable"); if (value.Broken || PercentageText.Percentage(value) != null) throw new Exception("Tayu stale140 used as cycle maximum"); }
                 *(int*)row = 0; Reject("Tayu zero published before active flag"); *(byte*)(row + 8) = 0;
@@ -56,7 +61,32 @@ static unsafe class TayuitarStateTest
                 *(int*)(row + 12) = 1; Reject("Tayu equipment attachment accepted as leg"); *(int*)(row + 12) = 0;
                 *(int*)(row + 4) = 0; Reject("Tayu uninitialized leg accepted"); *(int*)(row + 4) = 140;
                 *(int*)row = -1; Reject("Tayu negative current accepted"); *(int*)row = 140;
+                *(int*)(actor + 0x9410) = 0; *(byte*)(actor + 0x9435) = 1;
             }
+            *(int*)(actor + 0x9410) = 1; *(byte*)(actor + 0x9435) = 0;
+            *(int*)(parameter + 0x97c) = 50; *(int*)(parameter + 0x980) = 100;
+            *(int*)(parameter + 0x984) = 140; *(int*)(parameter + 0x988) = 200;
+            *(float*)(parameter + 0xc00) = .5f;
+            *(int*)(player + 0x118) = 787;
+            if (Read("Tayu ambiguous reset unavailable").Fraction != null) throw new Exception("Tayu ambiguous reset reused stale 140");
+            *(int*)(actor + 0x6a68 + 5 * 40) = 200;
+            if (PercentageText.Percentage(Read("Tayu first reset unavailable")) != 70) throw new Exception("Tayu first reset needs 200 maximum");
+            *(int*)(actor + 0x6a68 + 5 * 40) = 140; *(int*)(player + 0x118) = 1552;
+            if (PercentageText.Percentage(Read("Tayu changed leg unavailable")) != 70) throw new Exception("Tayu lost proven maximum after retarget");
+            *(ulong*)(target + 0x48) = *(ulong*)(stamps + 24) = 201;
+            if (Read("Tayu reused target unavailable").Fraction != null) throw new Exception("Tayu leaked maximum to reused actor");
+            *(int*)(actor + 0x6a68 + 5 * 40) = 200;
+            if (PercentageText.Percentage(Read("Tayu replacement first reset unavailable")) != 100) throw new Exception("Tayu replacement reset proof");
+            *(int*)(actor + 0x9430) = 1;
+            if (Read("Tayu later cycle unavailable").Fraction != null) throw new Exception("Tayu later cycle reused first reset maximum");
+            *(int*)(parameter + 0x8d8) = 1;
+            *(int*)(actor + 0x6a68 + 2 * 40) = 0; *(byte*)(actor + 0x6a68 + 2 * 40 + 8) = 0;
+            *(int*)(actor + 0x6a68 + 5 * 40) = 100;
+            *(int*)(actor + 0x9410) = 3; *(int*)(actor + 0x9430) = 0; *(byte*)(actor + 0x9435) = 1;
+            if (Read("Tayu in-flight round increment unavailable").Fraction != null) throw new Exception("Tayu break transition read stale initial as fresh");
+            *(int*)(parameter + 0x8d8) = 4;
+            *(int*)(actor + 0x6a68 + 2 * 40) = 140; *(byte*)(actor + 0x6a68 + 2 * 40 + 8) = 1;
+            *(ulong*)(target + 0x48) = *(ulong*)(stamps + 24) = 200;
             *(int*)(player + 0x118) = 7; *(int*)(actor + 0x9420) = 160;
             if (PercentageText.Percentage(Read("Tayu exposed head unavailable")) != 100) throw new Exception("Tayu head used unrelated1000 record");
             *(int*)(actor + 0x9420) = 80;
@@ -74,12 +104,18 @@ static unsafe class TayuitarStateTest
             if (PercentageText.Percentage(Read("Carnage damaged head unavailable")) != 50) throw new Exception("Carnage head used a leg maximum");
             *(nint*)(player + 0x108) = 0; Reject("Carnage no-lock displayed"); *(nint*)(player + 0x108) = target;
             if (PercentageText.Percentage(Read("Carnage head relock unavailable")) != 50) throw new Exception("Carnage head relock lost source");
+            *(int*)(actor + 0x9410) = 3; *(int*)(actor + 0x9430) = 0; *(byte*)(actor + 0x9435) = 1;
+            for (int index = 2; index <= 5; index++)
+            { nint row = actor + 0x6a68 + index * 40; *(int*)row = *(int*)(row + 4) = 1000; }
             foreach (var (selected, index) in new[] { (787, 2), (1043, 3), (1296, 4), (1552, 5) })
             {
                 *(int*)(player + 0x118) = selected; nint row = actor + 0x6a68 + index * 40;
-                *(int*)row = *(int*)(row + 4) = 1000;
-                if (Read("Carnage leg unavailable") is not { Visible: true, Broken: false, Fraction: null }) throw new Exception("Carnage leg acquired an unverified percentage");
+                if (PercentageText.Percentage(Read("Carnage leg unavailable")) != 100) throw new Exception("Carnage phase 3 initial cycle needs native 1000 maximum");
+                *(int*)row = 750;
+                if (PercentageText.Percentage(Read("Carnage damaged leg unavailable")) != 75) throw new Exception("Carnage initial cycle damage");
             }
+            *(int*)(actor + 0x6a68 + 2 * 40) = 0; *(byte*)(actor + 0x6a68 + 2 * 40 + 8) = 0;
+            if (PercentageText.Percentage(Read("Carnage surviving leg unavailable")) != 75) throw new Exception("Carnage lost initial maximum before break threshold");
             *(int*)(player + 0x118) = 7; *(int*)(actor + 0x9420) = 0;
             if (Read("Carnage unprocessed zero unavailable").Broken) throw new Exception("Carnage zero bypassed processed marker");
             *(byte*)(actor + 0x9996) = 1;
@@ -95,7 +131,7 @@ static unsafe class TayuitarStateTest
             *(nint*)(actor + 0x790) = entries + 49; Reject("Tayu misaligned lock vector accepted"); *(nint*)(actor + 0x790) = entries + 5 * 48;
             foreach (int id in new[] { -1, 0, 1792, 265 }) { *(int*)(player + 0x118) = id; Reject("Tayu metadata/equipment/unmapped selection accepted"); }
             *(int*)(player + 0x118) = 7; *(nint*)actor = module + 0x5b77240; Reject("unknown Tayu class accepted");
-            Console.WriteLine("PASS: real-memory Tayu/Carnage head source160/relock and four-leg icons with stale maxima omitted, zero-before-processing and actual break marker; invalid/unknown/disabled/stale state rejected");
+            Console.WriteLine("PASS: Tayu/Carnage head and leg percentages, first reset proof, fallback for unknown cycles, and stale actor rejection");
         }
         finally { foreach (nint p in allocations) NativeMemory.Free((void*)p); VirtualFree(module, 0, 0x8000); }
     }

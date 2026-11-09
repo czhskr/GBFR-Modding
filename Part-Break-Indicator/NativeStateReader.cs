@@ -2,6 +2,13 @@ namespace PartIndicator;
 
 public sealed class NativeStateReader(nint moduleBase)
 {
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private readonly record struct TayuitarLegRow(int Current, int Initial, int ActiveWord, int Attachment, int Kind)
+    {
+        public bool IsValid(int index, int initial) => Current is >= 0 and <= 1000000000 && Initial == initial &&
+            Attachment == 0 && Kind == index && (byte)ActiveWord == (Current == 0 ? 0 : 1);
+    }
+
     private (WorldIdentity World, long Generation, nint Scene, nint Actor, uint Id, ulong Stamp, uint Type,
         nint Parameter, int[] Initials, int VerifiedMask, int BrokenMask)? _proof;
     private (WorldIdentity World, long Generation, nint Scene, nint Actor, uint Id, ulong Stamp, uint Type,
@@ -10,11 +17,12 @@ public sealed class NativeStateReader(nint moduleBase)
         nint Parameter, int[] Initials, int VerifiedMask, int BrokenMask)> _proofCache = [];
     private readonly Dictionary<nint, (WorldIdentity World, long Generation, nint Scene, nint Actor, uint Id, ulong Stamp, uint Type,
         nint Parameter, float Initial, bool BrokenSeen)> _headProofCache = [];
+    private readonly Dictionary<nint, (nint Actor, ulong Stamp, nint Parameter, byte Flags, int Initial, int Maximum)> _tayuitarResetMaxima = [];
     private WorldIdentity _proofWorld;
     private long _proofGeneration;
     private static T R<T>(nint p) where T : unmanaged => ProcessMemory.Read<T>(p);
     private void ClearProof() { _proof = null; _headProof = null; }
-    private void ClearAllProofs() { ClearProof(); _proofCache.Clear(); _headProofCache.Clear(); }
+    private void ClearAllProofs() { ClearProof(); _proofCache.Clear(); _headProofCache.Clear(); _tayuitarResetMaxima.Clear(); }
     private bool Reject() { ClearProof(); return false; }
     private bool RejectWorld() { ClearAllProofs(); return false; }
 
@@ -358,6 +366,7 @@ public sealed class NativeStateReader(nint moduleBase)
         nint row = head ? 0 : actor + 0x6a68 + index * 40, currentAddress = head ? actor + 0x9420 : row;
         int current = R<int>(currentAddress), cachedInitial = 0, kind = 0, attachment = 0, configured = 0;
         byte active = 0, marker = 0; bool verified = false;
+        (int Phase, int Round, byte ResetPending) cycle = default;
         if (current is < 0 or > 1000000000) return Reject();
         if (head)
         {
@@ -369,7 +378,16 @@ public sealed class NativeStateReader(nint moduleBase)
         {
             cachedInitial = R<int>(row + 4); active = R<byte>(row + 8); attachment = R<int>(row + 12); kind = R<int>(row + 16);
             if (cachedInitial is < 1 or > 1000000000 || kind != index || attachment != 0 || active != (current == 0 ? 0 : 1)) return Reject();
-            // shortcut: leg resets change current without refreshing cached max; validate cycle scaling before showing percentages.
+            cycle = ReadTayuitarCycle(actor);
+            if (active == 1 && cycle is (0 or 3, 0, 1))
+                configured = ReadTayuitarLegMaximum(actor, parameter, flags, cachedInitial, initialCycle: true);
+            else if (active == 1 && cycle is (>= 0 and <= 3, 0, 0))
+            {
+                configured = _tayuitarResetMaxima.TryGetValue(scene, out var proof) &&
+                    (proof.Actor, proof.Stamp, proof.Parameter, proof.Flags, proof.Initial) == (actor, stamp, parameter, flags, cachedInitial)
+                    ? proof.Maximum : ReadTayuitarLegMaximum(actor, parameter, flags, cachedInitial, initialCycle: false);
+            }
+            verified = configured > 0 && current <= configured;
         }
         if (R<int>(currentAddress) != current || R<nint>(actor + 0x1598) != parameter || R<byte>(actor + 0xe) != flags ||
             (head ? R<byte>(actor + 0x9996) != marker || R<int>(parameter + 0xbf0) != configured :
@@ -381,8 +399,75 @@ public sealed class NativeStateReader(nint moduleBase)
             R<nint>(moduleBase + 0x7020988) != manager || R<nint>(manager + 0x20) != scenes || R<nint>(manager + 0x48) != stamps ||
             R<nint>(scenes + slot) != scene || R<ulong>(stamps + slot) != stamp || !TryReadWorld(out var after) || after != world) return Reject();
         bool broken = head ? current == 0 && marker == 1 : active == 0;
+        if (!head)
+        {
+            if (ReadTayuitarCycle(actor) != cycle) verified = false;
+            if (cycle is (>= 0 and <= 3, 0, 0) && verified && !broken)
+            {
+                if (_tayuitarResetMaxima.Count >= 64 && !_tayuitarResetMaxima.ContainsKey(scene)) _tayuitarResetMaxima.Clear();
+                _tayuitarResetMaxima[scene] = (actor, stamp, parameter, flags, cachedInitial, configured);
+            }
+            else if (cycle is not (>= 0 and <= 3, 0, 0) || !broken) _tayuitarResetMaxima.Remove(scene);
+        }
         snapshot = new(scene, actor, 0x1900, selected, true, current, verified ? configured : null, [], verified, generation, broken);
         return PartStatePolicy.Evaluate(snapshot).Visible;
+    }
+
+    private static (int Phase, int Round, byte ResetPending) ReadTayuitarCycle(nint actor) =>
+        (R<int>(actor + 0x9410), R<int>(actor + 0x9430), R<byte>(actor + 0x9435));
+
+    private static int ReadTayuitarLegMaximum(nint actor, nint parameter, byte flags, int cachedInitial, bool initialCycle)
+    {
+        Span<TayuitarLegRow> legs = stackalloc TayuitarLegRow[4];
+        int largestCurrent = 0, brokenCount = 0;
+        for (int i = 0; i < legs.Length; i++)
+        {
+            int index = i + 2;
+            if (!ProcessMemory.TryRead<TayuitarLegRow>(actor + 0x6a68 + index * 40, out legs[i]) || !legs[i].IsValid(index, cachedInitial)) return 0;
+            largestCurrent = Math.Max(largestCurrent, legs[i].Current);
+            if (legs[i].Current == 0) brokenCount++;
+        }
+
+        int maximum;
+        if (initialCycle)
+        {
+            // The break handler sets pending before increasing the round, even when other legs survive.
+            if (!ProcessMemory.TryRead<int>(parameter + 0x8d8, out var breakThreshold) ||
+                brokenCount >= Math.Max(1, breakThreshold) || largestCurrent > cachedInitial) return 0;
+            maximum = cachedInitial;
+        }
+        else maximum = ResolveTayuitarFirstResetMaximum(parameter, flags, largestCurrent);
+
+        for (int i = 0; i < legs.Length; i++)
+            if (!ProcessMemory.TryRead<TayuitarLegRow>(actor + 0x6a68 + (i + 2) * 40, out var leg) || leg != legs[i]) return 0;
+        return maximum;
+    }
+
+    private static int ResolveTayuitarFirstResetMaximum(nint parameter, byte flags, int largestCurrent)
+    {
+        // Round zero uses 1 or the short-cycle scale. Higher rounds use native powf and need separate proof.
+        if (!ProcessMemory.TryRead<float>(parameter + 0xc00, out var shortScale) || !float.IsFinite(shortScale) || shortScale <= 0) return 0;
+        int maximum = 0;
+        int lastSource = (flags & 0x40) == 0 ? 0x988 : 0x98c;
+        for (int offset = 0x97c; offset <= lastSource; offset += 4)
+        {
+            if (!ProcessMemory.TryRead<int>(parameter + offset, out var source) || source is < 1 or > 1000000000) return 0;
+            float shortMaximum = (float)source * shortScale;
+            if (shortMaximum is < 1 or > 1000000000) return 0;
+            int full = (int)(float)source;
+            int shorter = (int)shortMaximum;
+            // Damage can only reduce the reset value, so every remaining candidate must cover all four legs.
+            if (!KeepCandidate(full, largestCurrent, ref maximum) || !KeepCandidate(shorter, largestCurrent, ref maximum)) return 0;
+        }
+        return maximum;
+    }
+
+    private static bool KeepCandidate(int candidate, int largestCurrent, ref int maximum)
+    {
+        if (candidate < largestCurrent) return true;
+        if (maximum != 0 && maximum != candidate) return false;
+        maximum = candidate;
+        return true;
     }
 
     private bool TryReadPyet(WorldIdentity world, long generation, nint scene, nint actor, nint vt, int selected, out PartSnapshot? snapshot)
