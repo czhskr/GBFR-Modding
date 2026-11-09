@@ -92,6 +92,18 @@ Even if the resource epoch changes, an already validated identical material is r
 
 Atlas requests and hook/delegate lifetimes are retained until process exit. Suspending the module requests UI cleanup; it is not equivalent to completely unloading the module. No hot unregister of the custom atlas is claimed.
 
+## Additional startup failure and resource cleanup tests
+
+The following tests concern candidate source [`6d5198f`](https://github.com/czhskr/GBFR-Modding/tree/6d5198f2f8fe84f2b3fe38b5ba5e9b886957d4cb/Part-Break-Indicator) after the existing 1.0.0 release. In-game failures were injected using a separate diagnostic DLL; the candidate and released build are distinct.
+
+**Implementation policy:** If required initialization fails, the HUD remains disabled and resume requests are rejected. Hooks already activated are not rolled back; they and their callbacks are retained until process exit. Failure of the optional Tayu'itar hook is handled separately. See the candidate's [startup and resume implementation](https://github.com/czhskr/GBFR-Modding/blob/6d5198f2f8fe84f2b3fe38b5ba5e9b886957d4cb/Part-Break-Indicator/Mod.cs).
+
+**In-game observation:** Exceptions were injected separately after the first required hook and after the HUD service was connected. In both cases resume was rejected, the HUD stayed disabled, and previously installed callbacks returned. The normal lock-on ring, camera, and input worked in the observed scenarios. Injecting an exception before activation of the optional Tayu'itar hook left the basic HUD operational. Injecting a service exception while an indicator was visible hid the indicator and recorded completed UI retirement.
+
+**In-game observation:** After a basic icon was registered, a diagnostic test changed the next Image creation result to a failure. The unregistered Image and Object and their wrapper allocation were each released once. The registered icon received one engine deletion request; its Image, Object, and Canvas destructors each ran once, and it was removed from the registration list. These observations do not guarantee behavior for every resource error or timing.
+
+**Separate-process test:** In x64 synthetic code using Reloaded.Hooks 4.3.2, the target page of a second hook was decommitted to induce an activation exception. The first hook preserved the original return value over 100 calls after the exception, and disabling it restored the original call path. This does not mean the same SDK exception was reproduced in the game process.
+
 ## Unverified scope and update checks
 
 The observed plain-Image ownership, creation, consumption, and cleanup paths and tested UI transitions are limited. They do not guarantee the lifetime of all effects/caches, GPU completion, relative order at equal sort keys, 3D depth occlusion, arbitrary address reuse, long-running operation, online play, or actual module unload.

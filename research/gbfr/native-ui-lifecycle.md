@@ -94,6 +94,18 @@ UI owner 전역 `RVA 0x7C01858`과 아틀라스 요청 context 전역 `RVA 0x7C1
 
 아틀라스 요청과 hook/delegate의 수명은 프로세스 종료까지 유지한다. 이 모듈의 suspend는 UI 정리를 요청하는 동작이며, 모듈의 완전한 unload와 같지 않다. 전용 아틀라스의 hot unregister를 구현한 것으로 해석하지 않는다. 관련 검사는 [NativeHeadAssets](https://github.com/czhskr/GBFR-Modding/blob/ef42ea2987883b69ed50ef9a17f72b838a95948e/Part-Break-Indicator/NativeHeadAssets.cs)에 있다.
 
+## 초기화 실패와 자원 정리의 추가 검증
+
+다음은 기존 1.0.0 배포본 이후의 후보 소스 [`6d5198f`](https://github.com/czhskr/GBFR-Modding/tree/6d5198f2f8fe84f2b3fe38b5ba5e9b886957d4cb/Part-Break-Indicator)에 대한 검증이다. 배포본과 구분하며, 게임 내 실패 주입에는 별도의 진단 DLL을 사용했다.
+
+**구현 정책:** 필수 초기화가 완료되기 전 실패하면 HUD를 비활성화하고 재개 요청을 거부한다. 이미 활성화된 후크는 롤백하지 않고 콜백과 함께 프로세스 종료까지 유지한다. 선택적 타이유타르 후크 실패는 별도로 처리한다. [초기화 및 재개 구현](https://github.com/czhskr/GBFR-Modding/blob/6d5198f2f8fe84f2b3fe38b5ba5e9b886957d4cb/Part-Break-Indicator/Mod.cs)을 참고한다.
+
+**게임 내 관찰:** 첫 필수 후크 직후와 HUD 서비스 연결 직후 예외를 각각 주입했을 때 재개가 거부되고 HUD는 비활성 상태를 유지했다. 앞서 설치된 콜백은 반환했으며 기본 록온 링, 카메라, 입력은 관찰한 범위에서 정상 동작했다. 선택적 타이유타르 후크 활성화 전 예외를 주입했을 때 기본 HUD는 동작했다. 표시 중 서비스 예외를 주입한 경우 표시가 사라지고 UI 정리 완료가 기록됐다.
+
+**게임 내 관찰:** 기본 아이콘 등록 후 다음 Image 생성 결과를 실패로 바꾼 시험에서 미등록 Image·Object와 래퍼가 각각 한 번 해제됐다. 등록된 아이콘은 엔진 삭제 요청 한 번과 Image·Object·Canvas 소멸자 각각 한 번을 거쳐 등록 목록에서 제거됐다. 이는 해당 시험의 관찰이며 모든 자원 오류나 실행 타이밍에 대한 보장은 아니다.
+
+**별도 프로세스 시험:** Reloaded.Hooks 4.3.2를 사용하는 x64 합성 코드에서 두 번째 후크 대상 페이지를 디커밋해 활성화 예외를 유도했다. 첫 후크는 예외 이후 100회 호출에서 원래 반환값을 유지했고 비활성화 후 원본 경로로 복귀했다. 이 결과는 게임 프로세스에서 동일한 SDK 예외가 재현됐다는 뜻은 아니다.
+
 ## 미검증 및 업데이트 후 재확인
 
 현재 plain Image 경로의 제한된 소유권·생성·소비·정리 관찰과 실제 UI 전환 결과가 있다. 이는 모든 effect/cache의 수명, GPU 완료, 동일 sort의 상대 순서, 3D depth occlusion, 임의 주소 재사용, 장시간 실행, 온라인 플레이 또는 실제 모듈 unload를 보증하지 않는다.
