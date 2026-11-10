@@ -5,6 +5,7 @@
 이 문서는 록온 대상 식별, 보스 부위 상태, 기존 UI를 이용한 표시의 수명 관리와 페이트 에피소드 스킵 조건을 설명한다. 특정 실행 파일에서 정적 해석과 제한된 실행 관찰로 확인한 범위를 다루며, 게임 전체에 적용되는 엔진 API 명세는 아니다.
 
 - [록온과 부위 상태](lock-on-and-part-state.md)
+- [부위 내구도와 피해 관찰](part-durability-observations.md)
 - [네이티브 UI의 소유권과 수명](native-ui-lifecycle.md)
 - [페이트 에피소드 스킵 조건](fate-episode-skip.md)
 

@@ -5,6 +5,7 @@
 These notes cover lock-on target identification, boss part state, the lifetime of indicators built with the existing UI, and Fate Episode Skip conditions. They describe static analysis and limited runtime observations of one executable, not an engine API specification for the whole game.
 
 - [Lock-on and part state](lock-on-and-part-state.en.md)
+- [Part durability and damage observations](part-durability-observations.en.md)
 - [Native UI ownership and lifecycle](native-ui-lifecycle.en.md)
 - [Fate Episode Skip conditions](fate-episode-skip.en.md)
 
